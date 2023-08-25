@@ -206,6 +206,11 @@ cases_json <- c(2015:2020) %>%
   # Read the JSON files for each year
   map(~jsonlite::read_json(  here("NHTSA_json", str_glue("WV_cases-{.x}.json")  ))) %>%
   
+  # ### To run remotely:
+  # map(~jsonlite::read_json(  str_glue(
+  #   "https://raw.githubusercontent.com/HunterRatliff1/WV_NHTSA/main/NHTSA_json/WV_cases-{.x}.json"
+  # ) )) %>%
+  
   # Since this is a list of JSON, we need to flatten it once to make all the 
   # items in the same list (e.g. go from a list of six lists --> one long list
   # with cases across all years)
@@ -859,29 +864,25 @@ violations_long %>%
 
 This is extracted from the **PERSON** data file ([page 247](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=252)). Each row in this file is a person, identified by the unique combo of the primary keys `CaseYear`, `ST_CASE`, `VEH_NO`, and **`PER_NO`**. This does not include people who were not inside a motor vehicle, and in some cases not all occupants of the vehicle are included in this file (when `NUMOCCS` is NA). As in elsewhere in this file, new data items that are not defined in FARS are in bold
 
-| Data item               | Key                                                                                                                                                                            |
+| Data item               | Key                                                                                                                                                                           |
 |------------------------------------|------------------------------------|
-| `CaseYear`, `ST_CASE`   | Keys as defined in the **cases** table                                                                                                                                         |
-| `VEH_NO`, `NUMOCCS`     | Keys as defined in the **vehicles** table                                                                                                                                      |
-| `PER_NO`                | Unique identifier of the person in that vehicle (pg 31)                                                                                                                        |
-| `AGE`                   | Age in years (pg 248). Will be 0 if under 1 year of age                                                                                                                        |
-| `SEX`                   | Male or female sex (pg 249)                                                                                                                                                    |
-| `PER_TYP`               | Whether they were the driver or passenger (pg 250)                                                                                                                             |
-| `INJ_SEV`, **`KABCO`†** | Injury severity as determined by the officers at the scene (pg 252), using the KABCO scale where K=fatal, A=serious, B=Minor, C=possible, and O=no injury                      |
-| **`died*`**             | A logical column indicating if they died. Derived from `INJ_SEV` and `DEATH_YR` (pg 277).                                                                                      |
-| **`died_where*`**       | A categorical column for where they died. Options include Survived, At scene, En route, Hospital, Unknown, and '????'. Derived from `DOA` (pg 274), **`died`**, and HOSPITAL.  |
-| **`died_timing*`**      | The hours an minutes from the time of crash and time of death. Will be NA if they survived or data is missing. Derived from `LAG_HRS` and `LAG_MINS` (pg 280).                 |
-| `HOSPITAL`              | Method of transport to the hospital, if any (pg 273)                                                                                                                           |
-| `EXTRACT`               | Logical column if equipment was used to remove person from vehicle (pg 264)                                                                                                    |
-| `EJECTION`              | Logical column if they were ejected (even partially) from the vehicle (pg 262)                                                                                                 |
-| `REST_USE`              | The type of restraint equipment used by person at time of crash (pg 255). In addition to seatbelts and child restraints, data for helmet use is also recorded here             |
-| `AIR_BAG`               | Logical column if any airbags of any type were deployed for this person (pg 261)                                                                                               |
-| `BAC`                   | Renamed version of ALC_RES (pg 269), expressed in g/dL                                                                                                                         |
-| `DRUGS`                 | In the judgment of law enforcement, were drugs involved? (pg 270)                                                                                                              |
-|                         |                                                                                                                                                                                |
-|                         |                                                                                                                                                                                |
-|                         |                                                                                                                                                                                |
-|                         |                                                                                                                                                                                |
+| `CaseYear`, `ST_CASE`   | Keys as defined in the **cases** table                                                                                                                                        |
+| `VEH_NO`, `NUMOCCS`     | Keys as defined in the **vehicles** table                                                                                                                                     |
+| `PER_NO`                | Unique identifier of the person in that vehicle (pg 31)                                                                                                                       |
+| `AGE`                   | Age in years (pg 248). Will be 0 if under 1 year of age                                                                                                                       |
+| `SEX`                   | Male or female sex (pg 249)                                                                                                                                                   |
+| `PER_TYP`               | Whether they were the driver or passenger (pg 250)                                                                                                                            |
+| `INJ_SEV`, **`KABCO`†** | Injury severity as determined by the officers at the scene (pg 252), using the KABCO scale where K=fatal, A=serious, B=Minor, C=possible, and O=no injury                     |
+| **`died*`**             | A logical column indicating if they died. Derived from `INJ_SEV` and `DEATH_YR` (pg 277).                                                                                     |
+| **`died_where*`**       | A categorical column for where they died. Options include Survived, At scene, En route, Hospital, Unknown, and '????'. Derived from `DOA` (pg 274), **`died`**, and HOSPITAL. |
+| **`died_timing*`**      | The hours an minutes from the time of crash and time of death. Will be NA if they survived or data is missing. Derived from `LAG_HRS` and `LAG_MINS` (pg 280).                |
+| `HOSPITAL`              | Method of transport to the hospital, if any (pg 273)                                                                                                                          |
+| `EXTRACT`               | Logical column if equipment was used to remove person from vehicle (pg 264)                                                                                                   |
+| `EJECTION`              | Logical column if they were ejected (even partially) from the vehicle (pg 262)                                                                                                |
+| `REST_USE`              | The type of restraint equipment used by person at time of crash (pg 255). In addition to seatbelts and child restraints, data for helmet use is also recorded here            |
+| `AIR_BAG`               | Logical column if any airbags of any type were deployed for this person (pg 261)                                                                                              |
+| `BAC`                   | Renamed version of ALC_RES (pg 269), expressed in g/dL                                                                                                                        |
+| `DRUGS`                 | In the judgment of law enforcement, were drugs involved? (pg 270)                                                                                                             |
 
 > \*These have more complex derivations, which are describe below
 >
@@ -951,7 +952,7 @@ persons %>%
   testthat::expect_equal(0)
 
 ####-------------------------- Clean up the data ---------------------------####
-persons %>%
+persons <- persons %>%
   
   mutate(PER_NO = as.numeric(PER_NO)) %>%
   
@@ -1092,10 +1093,59 @@ persons %>%
 rm(spec)
 ```
 
+### Deriving the 'died' variables
+
+This section explains how I derived the three variables **`died`**, **`died_where`**, and **`died_timing`**.
+
+**`died`**: Surprisingly, FARS doesn't have a clear variable for if the person died. It appears the best variable that can be used is `DEATH_YR` ([page 277](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=282)) which will be equal to `8888` if not applicable. However, this data element can also be equal to `9999` (unknown) which would theoretically under-capture deaths. Fortunately this isn't the case in this dataset, but to make this code more robust (I've only tested in on WV cases), I added some redundancy to the code. In practice though the variable **`died`** is TRUE if `DEATH_YR` $\neq$ 8888. case_when[^1] logic below
+
+[^1]: Case_when is like "If-else if-else". It test each condition (labeled as "tests" in the example) until it finds a condition that it true. A good [explainer](https://www.sharpsightlabs.com/blog/case-when-r/) can be found here. Although it's not explicitly written in the code, if it doesn't find any matches (i.e. Test 3), it will return N/A unless a default is specified
+
+| **`died`**:
+| Test 1: If (`INJ_SEV` is "Fatal") then (they died)
+| Test 2: ElseIf (`DEATH_YR` is 8888) then (they lived)
+| Test 3: Else (died is NA)
+
+**`died_where`**: This attempts to find out where the person died, primarily based off of the `DOA` data element ([pg 274](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=279)). It applies the following stepwise logic
+
+| If they died [*at the scene*]{.underline} (`DOA==7`) or [*en route*]{.underline} (`DOA==8`) then categorize them as such (respectively)
+| If they didn't die at all (`died==FALSE`), then categorize them as [*surviving*]{.underline}
+
+This leaves people who did die (`died==TRUE`) but who either had an unknown DOA status (`DOA==9`) or a not applicable DOA status (`DOA==0`). Because the unknown DOA status doesn't specify if they did or didn't die at the scene/en route, we'll mark them as unknown. This is an admittedly small number of people.
+
+| If DOA status is unknown (`DOA==9`), then categorize as [*unknown*]{.underline}
+
+We are now left with fatalities who were marked as not applicable for their DOA status (`DOA==0`). Now we turn to `HOSPITAL` ([pg 273](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=278)) to see if they were transported to the hospital. We would assume that most of these people were transported to the hospital (after all, this is based on death certificates and someone has to fill those out). So as long as `HOSPITAL!=0`, meaning they were not explicitly[^2] marked as not transported (`HOSPITAL==0`), we can assume they died at the hospital.
+
+[^2]: We are making an An implicit assumption here that in cases where HOSPITAL was *Not Reported* (8) or Reported as *Unknown* (9) these folks were actually brought to the hospital
+
+| If HOSPITAL !=0, then categorize them as [*hospital*]{.underline}
+
+Finally, this leaves us with people who died, were marked N/A for DOA (or during transport), \*\*and\*\* that were not transported for treatment. Admittedly, this is a small group of people, but they do exist. I have no earthly idea what happened here (first responders let them go home and they showed up dying later in the ED?), so I mark these as '????'. My guess is this is misrecording of information, but because none of the data here is missing, I'll leave verifying that assumption until later.
+
+**`died_timing`**: This is a string that lists the hours and minutes (HH:MM) from the time of crash to the time of death. It will be NA if they survived or data is missing. It's derived from `LAG_HRS` and `LAG_MINS` ([pg 280](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=285)).
+
 # Export to CSV
 
-TODO
+```{r clean-env}
+rm(cases_json, vehicles_nested)
+```
 
-```{r}
+
+Now we'll take these tables and write them to CSVs. To prevent inadvertently overwriting data, you'll need to toggle the flag below to get it to work.
+
+```{r write-csvs}
+write_to_file <- FALSE
+
+if(write_to_file) {
+  cases           %>% readr::write_csv(here("NHTSA_CSV", "cases.csv"))
+  vehicles        %>% readr::write_csv(here("NHTSA_CSV", "vehicles.csv"))
+  violations_long %>% readr::write_csv(here("NHTSA_CSV", "violations.csv"))
+  persons         %>% readr::write_csv(here("NHTSA_CSV", "persons.csv"))
+}
+```
+
+
+```{r sessioninfo}
 sessioninfo::session_info()
 ```
