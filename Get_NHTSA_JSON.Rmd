@@ -1,0 +1,1103 @@
+---
+title: "NHTSA Crashes"
+author: "Hunter Ratliff"
+date: "2023-08-10"
+output: 
+  html_document: 
+    toc: yes
+    toc_float: true
+    df_print: paged
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(warning=F, message=F, echo=F)
+knitr::opts_chunk$set(warning=F, message=F)
+
+library(httr)
+library(tidyverse)
+library(jsonlite)
+library(listviewer)
+library(here)
+library(lubridate)
+
+library(tibblify) # Used for nested data  https://mgirlich.github.io/tibblify/
+
+#Used to make pretty header comments in longer chunks
+comment_header <- function(txt, width=80){
+  padding <- (width - str_length(txt))/2
+  padding <- floor(padding) - 5
+  
+  str_glue('####{str_dup("-",padding)} {txt} {str_dup("-",padding)}####')
+  
+}
+```
+
+This uses <https://crashviewer.nhtsa.dot.gov/CrashAPI> for the Fatality Analysis Reporting System (**FARS**) API
+
+The codebook can [be found here](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417)
+
+# API functions
+
+The `getCaseList` makes a call to the **Get Crash List Information** FARS API. The purpose of this function is to get all of the `st_case` IDs for a given year in a given state.
+
+Although the API can handle more than one state, identified by FIPS (*Federal Information Processing System*) codes, we will only use one state (West Virginia, code 54) for this function. It also allows you to query multiple years (using the *fromYear* and *toYear* parameters of the API), but we'll keep it to one year per query (since `st_case` IDs are recycled each year).
+
+Parameters for this function:
+
+| Parameter     | Definition                                                                                                 |
+|--------------------------|----------------------------------------------|
+| **`year`**    | The year of data you want to query                                                                         |
+| **`fmt`**     | Format that the data should be returned as. May be CSV (returns a table), or json (returns the json)       |
+| **`state`**   | FIPS state code to be used                                                                                 |
+| **`max_veh`** | Maximum number of vehicles involved in the crash. Defaults to 100 to be sure that all crashes are included |
+| **`verbose`** | If set to `TRUE`, then will print the API's URL as a message (useful for debugging)                        |
+
+Basically, you specify a year for `getCaseList()` and it returns a data.frame with the **st_case** (an ID for that crash, which is specific to that year), the **crashdate**, some geographic info (the state and county of the crash), the **totalvehicles** involved, number of **fatals**, **persons**, and **peds** (pedestrians) involved in the crash, and the **year**.
+
+```{r fxn-getCaseList, class.source = 'fold-show'}
+# FXN: getCaseList 
+getCaseList <- function(year, fmt="csv", state=54, max_veh=100, verbose=F){
+  library(httr)
+  library(jsonlite)
+  fmt <- rlang::arg_match(fmt, c("csv", "json"))
+  
+  # Prevent too rapid of queries
+  Sys.sleep(time = 0.05)
+  
+  
+  res <- httr::GET(
+    url = "https://crashviewer.nhtsa.dot.gov/CrashAPI/crashes/GetCaseList", 
+    query= list(
+      states           = state,
+      fromYear         = year,
+      toYear           = year,
+      minNumOfVehicles = 0,
+      maxNumOfVehicles = max_veh,
+      format           = fmt
+   ))
+  if(verbose) message(res$url)
+  
+  res_txt <- httr::content(res, "text", encoding = "UTF-8")
+  
+  if(fmt=="csv"){
+    readr::read_csv(res_txt, show_col_types = FALSE) %>%
+      mutate(year = year) %>%
+      return()
+  } else if(fmt=="json"){
+    return(  jsonlite::fromJSON(res_txt)  )
+  } 
+}
+
+# getCaseList(year = 2017, verbose = T)
+
+```
+
+The `getCaseDetails` makes a call to the **Get Crash Details** FARS API function. This gets all of the juicy details from a crash, as identified by the combination of `st_case`, `year`, and `state` FIPS code.
+
+It's important to note that crashes are identified by combination of `st_case` **and** `year`. This means there is no unique identifiers for each crash, but it appears that the combo of `year` + `st_case` can be used to uniquely identify crashes. The excerpt from the 2017 & 2018 crashes in West Virginia demonstrate this point:
+
+| `st_case` | `crashdate`       | `countyname`    |
+|-----------|-------------------|-----------------|
+| 540002    | 1/8/2017 1:45 AM  | BERKELEY (3)    |
+| 540003    | 1/9/2017 4:46 PM  | TYLER (95)      |
+| ...       | ...               | ...             |
+| 540002    | 1/5/2018 4:34 PM  | MONONGALIA (61) |
+| 540003    | 1/7/2018 11:07 PM | RANDOLPH (83)   |
+
+Parameters for this function:
+
+| Parameter        | Definition                                                                          |
+|--------------------------|----------------------------------------------|
+| **`st_case_id`** | The `st_case ID` for the crash                                                      |
+| **`year`**       | The year of data                                                                    |
+| **`state`**      | FIPS state code to be used. Default is West Virginia (code 54)                      |
+| **`verbose`**    | If set to `TRUE`, then will print the API's URL as a message (useful for debugging) |
+| **`sleep`**      | Amount of time to rest between API calls                                            |
+
+**NOTE:** As far as I'm aware, the API doesn't let you as for specific variables to be returned (you get everything for that associated crash), so the API calls can take quite some time and are very memory intensive.
+
+```{r fxn-getCaseDetails, class.source = 'fold-show'}
+# FXN: getCaseDetails 
+getCaseDetails <- function(st_case_id, year, 
+                           state=54, verbose=F, 
+                           sleep=0.01, clean=F){
+  
+  library(httr)
+  library(jsonlite)
+  
+  # Prevent too rapid of queries
+  Sys.sleep(time = sleep)
+  
+  
+  res <- httr::GET("https://crashviewer.nhtsa.dot.gov/CrashAPI/crashes/GetCaseDetails", 
+                   query= list(
+                     stateCase = st_case_id,
+                     caseYear = year,
+                     state = state,
+                     format = "json"
+                   ))
+  if(verbose) message(res$url)
+  
+  res_txt <- httr::content(res, "text", encoding = "UTF-8")
+  
+  if(clean){
+    results <- jsonlite::fromJSON(res_txt, simplifyVector = FALSE)[["Results"]][[1]][[1]][["CrashResultSet"]]
+    return(results)
+  }
+  
+  jsonlite::fromJSON(res_txt, simplifyVector = TRUE)
+  
+}
+
+# x <- getCaseDetails(st_case_id = 540004, year = 2017)
+```
+
+Putting it together, we can use the `getCaseList()` for a given year and pull in each crash's details with the `getCaseDetails()`. We will save the JSON with each case labeled as `year`\_`st_case`
+
+```{r fxn-getYearDetails, class.source = 'fold-show'}
+# FXN: getYearDetails 
+getYearDetails <- function(year, msg=T){
+  df <- getCaseList(year)
+  
+  if(msg){
+    message(str_glue("There are {nrow(df)} cases for the year {year}"))
+  }
+  
+  temp_details <- df[["st_case"]] %>%
+    map(getCaseDetails, year = year, .progress = T)
+  
+  names(temp_details) <- str_glue('{year}_{df[["st_case"]]}')
+  
+  return(temp_details)
+}
+```
+
+# Getting the JSON from the API
+
+This downloads each crash (by year) and writes it to a JSON file (takes about 45 minutes)
+
+```{r call-getYearDetails, message=T, eval=F, class.source = 'fold-show'}
+# NOT RUN
+
+tictoc::tic()
+c(2015:2020) %>%
+  map(function(x){
+    # Prevent accidental overwriting
+    file_exists <- fs::file_exists(here("NHTSA_json", str_glue("WV_cases-{x}.json")))
+    if(file_exists){
+      message(str_glue("A file for the year {x} already exists. Rename or remove it to continue"))
+    }
+    
+    df <- getYearDetails(x)
+
+    jsonlite::write_json(x = df,
+                         path = here("NHTSA_json", str_glue("WV_cases-{x}.json"))
+    )
+  })
+tictoc::toc()
+```
+
+Now read in all of the JSON results that were downloaded above. This will be stored as `cases_json`
+
+```{r read-stored-json}
+cases_json <- c(2015:2020) %>%
+  
+  # Read the JSON files for each year
+  map(~jsonlite::read_json(  here("NHTSA_json", str_glue("WV_cases-{.x}.json")  ))) %>%
+  
+  # Since this is a list of JSON, we need to flatten it once to make all the 
+  # items in the same list (e.g. go from a list of six lists --> one long list
+  # with cases across all years)
+  list_flatten() %>%
+  
+  map("Results") %>%
+  map(1) %>%
+  map(1) %>%
+  map("CrashResultSet")
+```
+
+# Creating analysis tables
+
+## Cases (Accident)
+
+The first data.frame we will make is the cases table, where each unique case (i.e. event) is identified by the combination of `CaseYear` and `ST_CASE`. From what I can tell, this comes from the **ACCIDENT** data file ([page 33](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=38) of the codebook)
+
+| Data item                   | Key                                                                                                                                                                                                                                     |
+|--------------------------|----------------------------------------------|
+| `CaseYear`, `ST_CASE`       | Together these are primary keys that identify the case                                                                                                                                                                                  |
+| `crashDate`                 | The date-time of the crash                                                                                                                                                                                                              |
+| `LONGITUD`, `LATITUDE`      | The longitude & latitude of the crash                                                                                                                                                                                                   |
+| `HARM_EV`, `HARM_EVNAME`    | First harmful event of the crash (pg 54)                                                                                                                                                                                                |
+| `COUNTYNAME`                | County name and FIPS code                                                                                                                                                                                                               |
+| `DRUNK_DR`                  | Discontinued in 2015\*. Was number of drinking drivers involved in crash (pg 79)                                                                                                                                                        |
+| `WEATHERNAME`               | The prevailing atmospheric conditions at the time of the crash (pg 67)                                                                                                                                                                  |
+| ARR_HOUR, ARR_MIN           | Arrival time of EMS (pg 72). Becomes **`EMS_flag`** and **`EMS_time`** below                                                                                                                                                            |
+| **`EMS_flag`**              | Categorical vector that distinguishes if the arrival time of EMS is known ("yes"), unknown ("unknown time", "unknown if arrived"), or if they were "not called"                                                                         |
+| **`EMS_time`**              | The hour and minute, in 24-hour military time, of EMS arrival. Note that this may occur on a different day than the crash. Will be NA if EMS was not called or the time is unknown                                                      |
+| HOSP_HR, HOSP_MN            | EMS time of arrival at hospital (pg 73). Becomes **`Hosp_flag`** and **`Hosp_time`** below                                                                                                                                              |
+| **`Hosp_flag`**             | Categorical vector for time of arrival to hospital. Similar as to `EMS_flag`, will be "yes*"* if there is a time reported. Additional options include"unknown time", "unknown if transport", "cancelled", and "not applicable/notified" |
+| **`Hosp_time`**             | Same as `EMS_time`, but for time of arrival to the hospital                                                                                                                                                                             |
+| `totalvehicles`             |                                                                                                                                                                                                                                         |
+| `fatals`, `persons`, `peds` |                                                                                                                                                                                                                                         |
+
+> \*The codebook says it was discontinued, but it still populates in later years...
+
+To accomplish this (and check our work along the way), we'll start by calling the list of cases directly from the API using the `getCaseList()` function. Then we'll extract key case-level variables (e.g. location, time, weather) from the JSON list (`cases_json`). Finally, we'll do a few tests to double check that everything from the JSON list is matching up to the data collected directly from the API.
+
+```{r create-cases}
+
+####--------------- Get the list of cases fresh from the API ---------------####    
+cases_API <- map_df(c(2015:2020), getCaseList) %>%
+  select(-state, -statename) %>%
+  mutate(crashdate = lubridate::mdy_hm(crashdate))
+
+# Save as a backup to make reproducible
+if(!fs::file_exists(here("NHTSA_json", "WV_caselist.json"))){
+  jsonlite::write_json(cases_API,
+                       path = here("NHTSA_json", "WV_caselist.json"))
+}
+
+
+####------------ Extract case-level variables from stored JSON -------------####
+cases <- cases_json %>%
+  
+  # Extract is alias for `[`
+  map_df(magrittr::extract, c("CaseYear", "ST_CASE",
+                           "LATITUDE", "LONGITUD",
+                           "HARM_EVNAME", "HARM_EV",
+                           "COUNTYNAME",
+                           "DRUNK_DR", "WEATHERNAME",
+                           "ARR_HOUR", "ARR_MIN",
+                           "HOSP_HR", "HOSP_MN",
+                          
+                           "YEAR", "MONTH", "DAY",
+                           "HOUR", "MINUTE")) %>%
+
+  mutate(CaseYear = as.numeric(CaseYear),
+         ST_CASE  = as.numeric(ST_CASE)) %>%
+  
+  # Create a date column
+  mutate(across(c(MONTH:MINUTE), str_pad, width = 2, pad="0"),
+         crashDate = str_glue("{YEAR}-{MONTH}-{DAY} {HOUR}:{MINUTE}"),
+         crashDate = lubridate::ymd_hm(crashDate)) %>%
+  relocate(crashDate, .after = ST_CASE) %>%
+  select(-c(YEAR:MINUTE)) %>%
+
+  # Inner join to main list of cases
+  inner_join(cases_API, 
+             by = join_by(CaseYear == year, 
+                          ST_CASE  == st_case))
+
+####---------------------------- Do some tests ----------------------------####
+
+# Because we used an inner join above, this will tell us if we have the right
+# number of cases (e.g. did we drop any cases)
+testthat::expect_equal(nrow(cases), nrow(cases_API))
+
+# Are all of the county names the same?
+testthat::expect_equal(nrow(filter(cases, COUNTYNAME!=countyname)), 0)
+  
+# Are all of the dates the same?
+testthat::expect_equal(nrow(filter(cases, crashDate!=crashdate)), 0)
+
+####---------------- Clean up the table & remove temp files ----------------####
+
+cases <- cases %>% select(-crashdate, -countyname) %>%
+  relocate(LONGITUD, LATITUDE, COUNTYNAME, .after = crashDate)
+rm(cases_API)
+
+```
+
+We'll clean up the data a bit by making the following changes:
+
+-   **DRUNK_DR**: we'll make this a logical flag for if there was at least one driver was drunk
+
+-   **WEATHERNAME**: Simplify this to make new categories; clear, cloudy, rain (including hail), snow (including blowing snow), other (including smoke/fog, crosswinds, and other), and N/A (for unknown and not reported)
+
+-   We will consolidate EMS arrival times (`ARR_HOUR`, `ARR_MIN`) into two new columns: **EMS_flag** & **EMS_time**.
+
+    -   **`EMS_flag`:** Used to distinguish if the arrival time is known ("yes"), unknown ("unknown time", "unknown if arrived"), or if they were "not called"
+
+    -   **`EMS_time`**: If EMS_flag=="Yes", lists the reported arrival time of EMS in 24-hour military time (HH:MM). The FARS documentation notes that this may occur on a different day than the crash (e.g. crashed at a quarter till midnight, EMS shows up at 00:05). On initial glance, it also appears that some records have the time of EMS arrival preceding the time of the crash as well.
+
+    -   For simplicity, the "missing-ness" status is derived from `ARR_MIN`. This does leave it open to rare circumstances where `ARR_MIN` is not known, but `ARR_HOUR` is known. Given the large amount of data that is missing for these times generally, it seems appropriate to consider these cases as unknown altogether
+
+-   We will do something similar with hospital arrival times (`HOSP_HR`, `HOSP_MN`). Missingness is derived from `HOSP_MN` similar as described above
+
+    -   **`Hosp_flag`**: Used to distinguish if the arrival time is known ("yes"), unknown ("unknown time"), or if transportation was cancelled ("cancelled"). If the code was 88, FARS has this coded as "Not Applicable/Notified". I keep this coding *as is*, meaning I do [not]{.underline} try to split off those where EMS was not notified (e.g. EMS_flag=="Not called") from those where it was not applicable (such as cases where the patient died at the scene)
+
+    -   **`Hosp_time`**: Same idea as EMS_time. If Hosp_flag=="Yes" merge HOSP_HR and HOSP_MN to make a 24-hour military time (HH:MM). Otherwise, mark this column as NA
+
+```{r processing-cases}
+cases <- cases %>%
+  mutate(LONGITUD = as.numeric(LONGITUD),
+         LATITUDE = as.numeric(LATITUDE),
+         HARM_EVNAME = str_trim(HARM_EVNAME),
+         DRUNK_DR = as.numeric(DRUNK_DR)>0,
+         WEATHERNAME = case_when(
+           str_detect(WEATHERNAME, "Hail")  ~ "Rain",
+           str_detect(WEATHERNAME, "Snow")  ~ "Snow",
+           str_detect(WEATHERNAME, "Smoke") ~ "Other",
+           str_detect(WEATHERNAME, "Crosswinds") ~ "Other",
+           WEATHERNAME == "Not Reported"   ~ NA,
+           WEATHERNAME == "Unknown"        ~ NA,
+           TRUE                            ~ WEATHERNAME 
+         )) %>%
+  
+    mutate(ARR_HOUR = str_pad(ARR_HOUR,2, pad = '0'),
+         ARR_MIN  = str_pad(ARR_MIN,2, pad = '0'),
+         
+         EMS_flag = case_when(
+           ARR_MIN==99 ~ "Unknown time",
+           ARR_MIN==98 ~ "Unknown if arrived",
+           ARR_MIN==97 ~ "Cancelled",
+           ARR_MIN==88 ~ "Not called",
+           ARR_MIN <60 ~ "Yes",
+           TRUE ~ ARR_MIN),
+         
+         EMS_time = ifelse(EMS_flag!="Yes", 
+                           NA, 
+                           str_glue("{ARR_HOUR}:{ARR_MIN}"))
+  ) %>%
+  relocate(EMS_flag, EMS_time, .before = ARR_HOUR) %>%
+  select(-starts_with("ARR")) %>%
+  
+  mutate(HOSP_HR = str_pad(HOSP_HR,2, pad = '0'),
+         HOSP_MN  = str_pad(HOSP_MN,2, pad = '0'),
+         
+         Hosp_flag = case_when(
+           HOSP_MN==99 ~ "Unknown time",
+           HOSP_MN==98 ~ "Unknown if transport",
+           HOSP_MN==97 ~ "Cancelled",
+           HOSP_MN==96 ~ "Cancelled",
+           HOSP_MN==88 ~ "Not Applicable/Notified",
+           HOSP_MN <60 ~ "Yes",
+           TRUE ~ HOSP_MN),
+         
+         Hosp_time = ifelse(Hosp_flag!="Yes", 
+                           NA, 
+                           str_glue("{HOSP_HR}:{HOSP_MN}"))
+  ) %>%
+  relocate(Hosp_flag, Hosp_time, .before = HOSP_HR) %>%
+  select(-HOSP_HR, -HOSP_MN) 
+
+# cases %>%
+#     mutate(ARR_HOUR = str_pad(ARR_HOUR,2, pad = '0'),
+#          ARR_MIN  = str_pad(ARR_MIN,2, pad = '0'),
+#          
+#          # If unknown or NA, mark as such. Otherwise calculate the *expected*
+#          # date time of EMS arrival
+#          EMS_arrive = case_when(
+#            ARR_MIN >90 ~ "Unk",
+#            ARR_MIN==88 ~ NA,
+#            TRUE        ~ str_glue("{as.Date(crashDate)} {ARR_HOUR}:{ARR_MIN}")),
+#          
+#          # Now, there are some cases where the date changes (e.g. crashed at
+#          # a quarter till midnight, EMS shows up at 00:05). This is challenging,
+#          # may defer this to the analysis
+#          
+#          EMS_durr = case_when(
+#            ARR_MIN >90 ~ NA,
+#            ARR_MIN==88 ~ NA,
+#            TRUE ~ ymd_hm(EMS_arrive, quiet = TRUE)
+#          ),
+#          EMS_durr = case_when(
+#            ARR_MIN >60 ~ NA,
+#            TRUE ~ as.numeric(as.period(interval(crashDate, EMS_durr), unit="hour"))/3600
+#          )
+#   )
+```
+
+## Vehicles
+
+These are extracts from the **VEHICLE** data file ([page 91](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=96)). The vehicle data file includes details on each motor vehicle, identified by the primary keys `CaseYear`, `ST_CASE`, and **`VEH_NO`**. This can be linked to the **PERSONS** file and other vehicle level data files via `ST_CASE` and `VEH_NO`.
+
+> Note: I will sometimes use the shorthand identification `{CaseYear}-{ST_CASE}-{VEH_NO}` to refer to specific data entries
+
+| Data item                       | Key                                                                                                                                             |
+|--------------------------|----------------------------------------------|
+| `totalvehicles`                 | Total vehicles (pulled from the cases table)                                                                                                    |
+| `CaseYear`, `ST_CASE`, `VEH_NO` | Primary keys used to join to other tables                                                                                                       |
+| `NUMOCCS`                       | Number of occupants in the vehicle (pg 92)                                                                                                      |
+| `DEATHS`                        | Total number of fatalities in the vehicle (pg 161)                                                                                              |
+| `DR_DRINK`\*                    | Logical: If the driver was reported to be drinking (pg 161)                                                                                     |
+| `DR_ZIP`                        | Driver's zip code (pg 164). Will be listed as "NonUS" if the driver is not a resident of the US                                                 |
+| `SPEEDREL`                      | Logical: If law enforcement though speeding was related to the crash (pg 183)                                                                   |
+| `HIT_RUN`                       | Logical: If the vehicle (or it's driver) did not stop to render aid (pg 94)                                                                     |
+| `BODY_TYP`, `BODY_TYPNAME`      | NHTSA body type (pg 112)                                                                                                                        |
+| `MAK_MOD`, `MOD_YEAR`           | Make/Model (pg 105-111) and model year (pg 99)                                                                                                  |
+| **`Body`**                      | Derived from the `BODY_TYP` variable (by me). This is not a validated classification system so use with caution. See table below for derivation |
+| `DISTRACT`\*\*                  | Driver's distractions from the primary task of driving                                                                                          |
+| `IMPAIR`\*\*                    | Physical & psychological impairments (e.g. fatigue, alcohol, medical condition, anger)                                                          |
+
+> \*Will only be positive if police reported alcohol involvement or if there was a positive test for alcohol. The NHTSA codebook says this is likely an under count.
+>
+> \*\* These are derived from the [Distractions] (pg 463) and [DrImpair] (pg 466) data files in the sections below
+
+```{r create-vehicles}
+vehicles <- cases %>%
+  select(CaseYear, ST_CASE, totalvehicles)
+
+vehicles$data <- cases_json
+
+vehicles <- vehicles %>%
+  
+  hoist(data, "Vehicles") %>%
+  select(-data) %>%
+  unnest(Vehicles) %>%
+  hoist(Vehicles, 
+    "CaseYear", "ST_CASE",
+    "VEH_NO", "NUMOCCS", "DEATHS",
+    "DR_DRINKNAME", "DR_ZIP",
+    "SPEEDRELNAME", "HIT_RUNNAME",
+
+    "BODY_TYP", "BODY_TYPNAME",
+    "MAK_MODNAME", "MOD_YEAR") %>%
+
+  # Drop this col, as it's no longer needed
+  select(-Vehicles) 
+  
+  # map(~enframe(.x[["Vehicles"]])) 
+```
+
+We'll clean up the formatting here too. We will also create a new column called **`body`** with a simplified version of `BODY_TYP`.
+
+```{r processing-vehicles}
+vehicles <- vehicles %>%
+  
+  # Rename columns
+  rename(DR_DRINK = DR_DRINKNAME,
+         SPEEDREL = SPEEDRELNAME,
+         HIT_RUN  = HIT_RUNNAME,
+         # BODY_TYPE = BODY_TYPNAME,
+         MAK_MOD = MAK_MODNAME) %>%
+  
+  # Make the numeric columns numbers
+  mutate(across(.cols = c(CaseYear, ST_CASE, VEH_NO, NUMOCCS, DEATHS), 
+         .fns = as.numeric)) %>%
+  
+  # Make missing data explicit
+  mutate(NUMOCCS = na_if(NUMOCCS, 99),
+         MOD_YEAR = na_if(MOD_YEAR, "9998"),
+         MOD_YEAR = na_if(MOD_YEAR, "9999"),
+         DR_ZIP  = case_when(
+           DR_ZIP >= 99997 ~ NA,
+           DR_ZIP == 0     ~ "NonUS",
+           TRUE            ~ DR_ZIP)) %>%
+  
+  # Make DR_DRINK & HIT_RUN logical (use case_when to make non-matches N/A)
+  mutate(
+    DR_DRINK = case_when(
+      DR_DRINK == "Yes" ~ TRUE,
+      DR_DRINK == "No"  ~ FALSE),
+    HIT_RUN = case_when(
+      HIT_RUN == "Yes" ~ TRUE,
+      HIT_RUN == "No"  ~ FALSE)
+    ) %>%
+  
+  # Simplify speeding related (if not Y/N then make NA)
+  mutate(SPEEDREL = case_when(
+    str_detect(SPEEDREL, "Yes") ~ TRUE,
+    str_detect(SPEEDREL, "No")  ~ FALSE
+  )) %>%
+  
+  mutate(
+    BODY_TYP = as.numeric(BODY_TYP),
+    Body = case_when(
+      BODY_TYP %in% 1:8   ~ "Sedan",
+      BODY_TYP %in% 14:16 ~ "Utility/Minivan",
+      BODY_TYP %in% 20    ~ "Utility/Minivan",
+      BODY_TYP %in% c(21,50,55) ~ "Bus/Large van",
+     
+      BODY_TYP %in% 30:39 ~ "Pickup",
+      BODY_TYP %in% 67    ~ "Pickup",
+      BODY_TYP %in% 60:64 ~ "Straight truck",
+      BODY_TYP %in% c(28, 40) ~ "Straight truck",
+      BODY_TYP %in% 66    ~ "Truck-tractor",
+      
+      BODY_TYP %in% c(90, 96, 83, 84) ~ "ATV/Off road",
+      BODY_TYP %in% 80:88 ~ "Motorcycle",  # not counting above
+      
+      BODY_TYP %in% c(42, 92, 95, 97) ~ "Other (specified)",
+      BODY_TYP %in% c(9, 49, 72, 78, 98, 99) ~ "Unknown",
+  ))
+
+#Temporary list of the Body's, used to print below
+temp.ls <- vehicles %>% 
+  count(Body, sort = T) %>%
+  mutate(text = str_glue("<b>{Body}</b> [{scales::percent(n/sum(n))}]")) %>%
+  pull(text) %>%
+  str_flatten_comma(last = ", and ")
+
+
+```
+
+Vehicles are broken down into ten categories: `r temp.ls`.
+
+The detailed breakdown of my classification is in the table below.
+
+```{r body-breakdown}
+# There is an issue where the label (BODY_TYPNAME) changes slightly over the
+# years, which makes it duplicate a few BODY_TYP's when you do 
+#   count(Body, BODY_TYP, BODY_TYPNAME)   -vs-   count(Body, BODY_TYP)    
+#     The specific duplicates are BODY_TYP 31, 61:63, 67, 80, 83, 88 
+# To get around this, sample the df by BODY_TYP to create look up table
+
+temp.lookup <- vehicles %>%
+  group_by(BODY_TYP) %>%
+  select(BODY_TYP, BODY_TYPNAME) %>%
+  slice_head(n=1) 
+  
+
+
+vehicles %>% 
+  count(Body, BODY_TYP) %>% 
+  left_join(temp.lookup, by = join_by(BODY_TYP)) %>%
+  relocate(BODY_TYPNAME, .after = BODY_TYP) %>%
+  
+  # Clean up some of the names
+  mutate(body_name = case_when(
+    BODY_TYP %in% c(30,31,67,1,6,
+                    28,66,49,72,
+                    14,15,16,20,60) ~ str_remove(BODY_TYPNAME, "\\(.+\\)"),
+    BODY_TYP == 21 ~ "Large Van (inc van-based buses)",
+    BODY_TYP == 55 ~ "Van-Based Bus (GVWR >10k lbs)",
+    BODY_TYP == 42 ~ "Van-Based Bus Light Vehicle Based Motor Home",
+    
+    # Make footnotes for these, given their length of description
+    BODY_TYP == 88 ~ "Other motored cycle type [†]",
+    BODY_TYP == 97 ~ "Other vehicle type [‡]",
+    BODY_TYP == 40 ~ "Cab Chassis Based [§]",
+    
+    BODY_TYP == 61 ~ "Straight truck* or Cab-Chassis (GVWR 10-19.5k)",
+    BODY_TYP == 62 ~ "Straight truck* or Cab-Chassis (GVWR 19.5-26k)",
+    BODY_TYP == 63 ~ "Straight truck* or Cab-Chassis (GVWR >26k)",
+    BODY_TYP == 64 ~ "Straight truck* or Cab-Chassis (GVWR unknown)",
+    
+    TRUE           ~ BODY_TYPNAME,
+  )) %>%
+  select(-BODY_TYPNAME) %>%
+  mutate(BODY_TYP = str_pad(BODY_TYP, 2, pad="0")) %>%
+  relocate(body_name, .after = BODY_TYP) %>%
+  
+  # Calculate the proprtion that each BODY_TYP make up for
+  # the Body group
+  group_by(Body) %>%
+  mutate(group_total = sum(n),
+         n = str_glue("{n} ({scales::percent(n/sum(n))})"),
+         body_name = str_glue("{BODY_TYP}: {body_name}")) %>%
+  select(-BODY_TYP) %>%
+  
+  arrange(desc(group_total)) %>%
+  select(-group_total) %>%
+  
+  rename(`BODY_TYP, BODY_TYPNAME` = body_name,
+         `n (% of group)`=n) %>%
+  
+  knitr::kable()
+
+rm(temp.lookup, temp.ls) 
+```
+
+> [†] examples include mini-bikes, pocket motorcycles "pocket bikes"
+>
+> [‡] includes go-cart, fork-lift, city street sweeper dunes/swamp buggy
+>
+> [§] includes Rescue Vehicle, Light Stake, Dump, and Tow Truck
+>
+> [\*] These are "Single-unit straight truck or Cab-Chassis". The GVWR is listed in pounds
+
+## Nested tables
+
+A few tables are nested within the vehicles table. They are organized by vehicle and can contain multiple records (for example, if a driver had multiple violations charged)
+
+-   **Persons** ([pg 247](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=252)): We'll come back to this one in the next section
+
+-   **Distractions** ([pg 462](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=467)): This has information about driver distractions.
+
+-   **DrImpair** ([pg 465](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=470)): Information about physical impairments of drivers of motor vehicles.
+
+-   **Violations** ([pg 471](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=476)): Information about violations that were charged to drivers
+
+To make extracting this information easier, we'll create a temporary [nested table](https://tidyr.tidyverse.org/articles/rectangle.html) for these four tables. Each row of the table will still represent the vehicle, but now we will have *lists of [named]{.underline} lists* within each row
+
+```{r create-vehicles_nested}
+vehicles_nested <- cases_json %>%
+  
+  # Extract is alias for `[`
+  map_df(magrittr::extract, c("CaseYear", "ST_CASE", "Vehicles")) %>%
+  
+  hoist(Vehicles, 
+        "CaseYear", "ST_CASE",
+        "VEH_NO", "NUMOCCS", "DEATHS",
+        
+        # These (can) have multiple rows
+        "Distractions", "DrImpairs", "Violations",
+        "Persons") %>%
+  
+  # Drop this col, as it's no longer needed
+  select(-Vehicles) 
+```
+
+```{r example-vehicles_nested, eval=F, echo=F}
+# An example to demonstrate the structure
+vehicles_nested %>%
+  # Make a more simple primary key
+  mutate(id = str_glue("{CaseYear}_{ST_CASE}-{VEH_NO}")) %>%
+  select(id, Violations) %>%
+  
+  # Select some example cases
+  filter(id %in% c("2015_540159-2", "2019_540045-2", "2017_540245-1")) %>%
+  arrange(desc(id)) %>%
+  
+  # For each row (first map), go through each item in the list (second map)
+  # and extract the MVIOLATN from the JSON
+  mutate(Violations = Violations %>% map_chr(function(l){
+    x <- map(l, function(x) x[names(x) %in% c("MVIOLATNNAME", "MVIOLATN")])
+    x <- map(x, str_trunc, width=20) # Shorten the names
+    jsonlite::toJSON(x, pretty = T) 
+    # map_chr(l, "MVIOLATNNAME")
+  })) 
+```
+
+### Distractions
+
+From the codebook ([pg 463](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=468)): This identifies the driver's attention to driving prior to the driver's realization of an impending critical event or just prior to impact if realization of an impending critical event does not occur. This element reports on the presence of any distractions that may or may not have contributed to the crash.
+
+Distraction from the primary task of driving occurs when drivers divert their attention from the driving task to some other activity. Also, driving while daydreaming or lost in thought is identified as distracted driving by NHTSA. **Physical conditions/impairments** (*fatigue, alcohol, medical condition, etc.*) or **psychological states** (*anger, emotional, depressed, etc.*) are [**not**]{.underline} **identified as distractions** by NHTSA. Although the attribute 1 (Looked but Did Not See) was included in this element, this attribute is not considered a distraction and therefore should not be included in any distraction analysis
+
+```{r create-distract}
+###--------------------------- create-distract -----------------------------####
+distract <- vehicles_nested %>%
+  select(CaseYear, ST_CASE, VEH_NO, Distractions) %>%
+  
+  # Unnest the list of named lists, making one row per distraction
+  unnest_longer(Distractions) %>%
+  
+  # For each vehicle, create a tally of their number of distraction
+  group_by(CaseYear, ST_CASE, VEH_NO) %>%
+  mutate(n_dist = n()) %>%
+  ungroup() %>%
+  
+  # Extract the names and codes 
+  ## For 2015-2020 "MDRDSTRD" & "MDRDSTRDNAME" are the same as the below
+  hoist(Distractions, "DRDISTRACT", "DRDISTRACTNAME") %>% 
+  
+  # Remove the nested column to reduce file size
+  select(-Distractions)  %>%
+  
+  mutate(across(c(CaseYear, ST_CASE, VEH_NO), as.numeric))
+
+####---------------------------- Do some tests ----------------------------####
+
+# Make sure output has same number of rows as vehicles table
+testthat::expect_equal(nrow(distract), nrow(vehicles))
+
+# Make sure joining keeps the same number of rows
+testthat::expect_equal(nrow(vehicles),
+                       {vehicles %>% 
+                           inner_join(select(distract, CaseYear, ST_CASE, VEH_NO, DRDISTRACTNAME),
+                                      by = join_by(CaseYear, ST_CASE, VEH_NO)) %>%
+                           nrow()
+                       })
+
+####--------------------- Show duplicates & top causes ---------------------####
+# There are no duplicates
+testthat::expect_equal(nrow(filter(distract, n_dist>1)), 0)
+
+distract %>%
+  count(DRDISTRACT, DRDISTRACTNAME, sort=T)
+
+####---------------- Move info to vehicles and remove table ----------------####
+vehicles <- vehicles %>%
+  inner_join(select(distract, CaseYear, ST_CASE, VEH_NO, DISTRACT=DRDISTRACTNAME),
+             by = join_by(CaseYear, ST_CASE, VEH_NO))
+
+rm(distract)
+```
+
+This is an easy case, as there is only one distraction record per driver. We can take the results from this table and directly merge it with the vehicle table (to reduce that number of tables we're working with)
+
+### DrImpair
+
+From the codebook ([pg 466](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=471)): This attempts to identify physical impairments to this driver that may have contributed to the cause of the crash (as identified by law enforcement). Drivers may have more than one impairment listed, and the table below lists these vehicles/drivers with multiple impairments.
+
+```{r create-impair_long}
+####-------------------------- create-impair_long --------------------------####
+impair_long <- vehicles_nested %>%
+  select(CaseYear, ST_CASE, VEH_NO, DrImpairs) %>%
+
+  # Unnest the list of named lists, making one row per impairment
+  unnest_longer(DrImpairs) %>%
+  
+  # For each vehicle, create a tally of their number of DrImpairs
+  group_by(CaseYear, ST_CASE, VEH_NO) %>%
+  mutate(n_impairs = n()) %>%
+  ungroup() %>%
+  
+  # Extract the names and codes 
+  hoist(DrImpairs, "DRIMPAIR", "DRIMPAIRNAME") %>% 
+  
+  # Remove the nested column to reduce file size
+  select(-DrImpairs)  %>%
+  
+  # Simplify some duplicates
+  mutate(Impairment = case_when(DRIMPAIR == "0"  ~ "None/Apparently Normal",
+                                DRIMPAIR == "9"  ~ "Under the Influence",
+                                DRIMPAIR == "99" ~ "Unknown",
+                                DRIMPAIR == "98" ~ "Unknown",
+                                DRIMPAIR == "8"  ~ "Emotional",
+                                DRIMPAIR == "96" ~ "Other Physical Impairment",
+                                TRUE             ~ DRIMPAIRNAME)) 
+
+####--------------------------- Show duplicates ----------------------------####
+impair_long %>%
+  filter(n_impairs>1)
+```
+
+There are only a handful of vehicles that had multiple impairments listed. Two of these (`2016-540070-1` and `2017-540268-1`) had the driver under the influence, and one of these (`2016-540154-1`) listed the driver as both "Ill, Blackout" and "Asleep or Fatigued". For simplicity, we'll categorize the two who were under the influence as such (ignoring that they were also emotional & fatigued) and classify the third as "Ill, Blackout".
+
+Similar to above, this will allow us to make a new column called **IMPAIR** in the `vehicles` table with the results from the Drimpair data file
+
+```{r create-impair}
+####----------------- Reduce multiple responses to single ------------------####
+impair <- impair_long %>%
+  select(-DRIMPAIR, -DRIMPAIRNAME) %>%
+
+  # For each vehicle, make the impairments a list
+  group_by(CaseYear, ST_CASE, VEH_NO) %>%
+  summarise(Impairment = list(Impairment), .groups = "keep") %>%
+  
+  # Run through the list and apply the logic to make it a char vector
+  mutate(IMPAIR = Impairment %>% map_chr(function(ls){
+    # If only one entry, return it
+    if(length(ls)==1) return(ls)
+    
+    # Otherwise, look for the following in the list. If a match is found
+    # return the rhs value. If nothing is found, join the items by ANDs
+    case_when(
+      "Under the Influence" %in% ls ~ "Under the Influence",
+      "Ill, Blackout" %in% ls       ~ "Ill, Blackout",
+      TRUE                          ~ str_flatten(ls, " --AND-- ")
+    )
+  })) %>%
+  ungroup() %>%
+  
+    mutate(across(c(CaseYear, ST_CASE, VEH_NO), as.numeric))
+
+####---------------------------- Do some tests ----------------------------####
+
+# Make sure output has same number of rows as vehicles table
+testthat::expect_equal(nrow(impair), nrow(vehicles))
+
+# Make sure joining keeps the same number of rows
+testthat::expect_equal(nrow(vehicles),
+                       {vehicles %>% 
+                           inner_join(select(impair, CaseYear, ST_CASE, VEH_NO, IMPAIR),
+                                      by = join_by(CaseYear, ST_CASE, VEH_NO)) %>%
+                           nrow()
+                       })
+
+
+####---------------------------- Summary stats ----------------------------####
+impair %>% 
+  count(IMPAIR, sort=T) %>%
+  mutate(`%` = scales::percent(n/sum(n)))
+
+####---------------- Move info to vehicles and remove table ----------------####
+vehicles <- vehicles %>%
+  inner_join(select(impair, CaseYear, ST_CASE, VEH_NO, IMPAIR),
+             by = join_by(CaseYear, ST_CASE, VEH_NO))
+
+rm(impair, impair_long)
+```
+
+### Violations
+
+The codebook says "VIOLATION" became "MVIOLATN" starting in 2020. It looks like they moved all of the "VIOLATION" to "MVIOLATN" for all the years we're looking at (2015-2020), but for some reason they don't retain "VIOLATION" from 2017-19 but do retain it for years 2015 & 2016.
+
+Regardless, the results are consistent if you use "MVIOLATN" across all years (meaning `"MVIOLATN" == "VIOLATION"` except for when "VIOLATION" is `NA`), so we'll use "MVIOLATN" to identify violations
+
+See [page 472](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=477) of codebook for details. Could also use their grouping (e.g. codes 21-29 are *speed-related offense*) to make new groups
+
+```{r create-violations}
+### VIOLATIONS
+violations_long <- vehicles_nested %>%
+  select(CaseYear, ST_CASE, VEH_NO, Violations) %>%
+
+  # Unnest the list of named lists, making one row per violation
+  unnest_longer(Violations) %>%
+  
+  # For each vehicle, create a tally of their number of violations
+  group_by(CaseYear, ST_CASE, VEH_NO) %>%
+  mutate(n_violations = n()) %>%
+  ungroup() %>%
+  
+  # Extract the names and codes for the violations
+  hoist(Violations, "MVIOLATN", "MVIOLATNNAME") %>% 
+  
+  
+  # For those with no violations, make their n_violations zero
+  mutate(n_violations = ifelse(MVIOLATN=="0", 0, n_violations)) %>%
+  
+  # Remove the nested column to reduce file size
+  select(-Violations) 
+```
+
+The top 10 violations that were charged are below. Not shown are the `r nrow(filter(violations_long, MVIOLATN=="0"))` vehicles that did not have any charges filed, which account for `r scales::percent(nrow(filter(violations_long, MVIOLATN=="0"))/nrow(vehicles))` of vehicles
+
+```{r table-violations_long}
+violations_long %>% 
+  filter(MVIOLATN!="0") %>%
+  count(MVIOLATNNAME, sort=T) %>%
+  mutate(`%` = scales::percent(n/sum(n))) %>%
+  slice_head(n=10)
+```
+
+## Persons
+
+This is extracted from the **PERSON** data file ([page 247](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=252)). Each row in this file is a person, identified by the unique combo of the primary keys `CaseYear`, `ST_CASE`, `VEH_NO`, and **`PER_NO`**. This does not include people who were not inside a motor vehicle, and in some cases not all occupants of the vehicle are included in this file (when `NUMOCCS` is NA). As in elsewhere in this file, new data items that are not defined in FARS are in bold
+
+| Data item               | Key                                                                                                                                                                            |
+|------------------------------------|------------------------------------|
+| `CaseYear`, `ST_CASE`   | Keys as defined in the **cases** table                                                                                                                                         |
+| `VEH_NO`, `NUMOCCS`     | Keys as defined in the **vehicles** table                                                                                                                                      |
+| `PER_NO`                | Unique identifier of the person in that vehicle (pg 31)                                                                                                                        |
+| `AGE`                   | Age in years (pg 248). Will be 0 if under 1 year of age                                                                                                                        |
+| `SEX`                   | Male or female sex (pg 249)                                                                                                                                                    |
+| `PER_TYP`               | Whether they were the driver or passenger (pg 250)                                                                                                                             |
+| `INJ_SEV`, **`KABCO`†** | Injury severity as determined by the officers at the scene (pg 252), using the KABCO scale where K=fatal, A=serious, B=Minor, C=possible, and O=no injury                      |
+| **`died*`**             | A logical column indicating if they died. Derived from `INJ_SEV` and `DEATH_YR` (pg 277).                                                                                      |
+| **`died_where*`**       | A categorical column for where they died. Options include Survived, At scene, En route, Hospital, Unknown, and '????'. Derived from `DOA` (pg 274), **`died`**, and HOSPITAL.  |
+| **`died_timing*`**      | The hours an minutes from the time of crash and time of death. Will be NA if they survived or data is missing. Derived from `LAG_HRS` and `LAG_MINS` (pg 280).                 |
+| `HOSPITAL`              | Method of transport to the hospital, if any (pg 273)                                                                                                                           |
+| `EXTRACT`               | Logical column if equipment was used to remove person from vehicle (pg 264)                                                                                                    |
+| `EJECTION`              | Logical column if they were ejected (even partially) from the vehicle (pg 262)                                                                                                 |
+| `REST_USE`              | The type of restraint equipment used by person at time of crash (pg 255). In addition to seatbelts and child restraints, data for helmet use is also recorded here             |
+| `AIR_BAG`               | Logical column if any airbags of any type were deployed for this person (pg 261)                                                                                               |
+| `BAC`                   | Renamed version of ALC_RES (pg 269), expressed in g/dL                                                                                                                         |
+| `DRUGS`                 | In the judgment of law enforcement, were drugs involved? (pg 270)                                                                                                              |
+|                         |                                                                                                                                                                                |
+|                         |                                                                                                                                                                                |
+|                         |                                                                                                                                                                                |
+|                         |                                                                                                                                                                                |
+
+> \*These have more complex derivations, which are describe below
+>
+> †KABCO: For West Virginia, "A" is an "Incapacitating Injury" severe enough to require individual to be immediately transported from the scene
+
+```{r create-persons}
+####------------------------- Specs for the table --------------------------####
+spec <- tspec_df(
+  tib_chr("PER_NO"),
+  AGE = tib_chr("AGE"),
+  SEX = tib_chr("SEXNAME"),
+  tib_chr("PER_TYP"),
+  tib_chr("PER_TYPNAME"),
+  tib_chr("INJ_SEV"),
+  tib_chr("INJ_SEVNAME"),
+  tib_chr("DOA"),
+  tib_chr("DOANAME"),
+  tib_chr("LAG_HRS"),
+  tib_chr("LAG_MINS"),
+  tib_chr("DEATH_YR"),
+  
+  tib_chr("HOSPITAL"),
+  tib_chr("HOSPITALNAME"),
+  tib_chr("EXTRICAT"),
+  tib_chr("EXTRICATNAME"),
+  tib_chr("EJECTION"),
+  tib_chr("EJECTIONNAME"),
+  
+  tib_chr("REST_USE"),
+  tib_chr("REST_USENAME"),  
+  tib_chr("AIR_BAG"),   
+  tib_chr("AIR_BAGNAME"),
+  
+  # DRINKING = tib_chr("DRINKINGNAME"),
+  tib_chr("ALC_RES"),
+  tib_chr("ALC_RESNAME"),
+  # ALC_STATUS = tib_chr("ALC_STATUSNAME"),
+  # ATST_TYP = tib_chr("ATST_TYPNAME"),
+  DRUGS = tib_chr("DRUGSNAME")
+)
+
+####--------------------------- Extract the data ---------------------------####
+persons <- vehicles_nested %>%
+
+  select(CaseYear, ST_CASE, VEH_NO, NUMOCCS, Persons) %>%
+  
+  # Make the numeric columns numbers (to match vehicles table)
+  mutate(across(.cols = c(CaseYear, ST_CASE, VEH_NO, NUMOCCS), 
+         .fns = as.numeric),
+         NUMOCCS = na_if(NUMOCCS, 99)) %>%
+  
+  
+  # Get the data
+  mutate(Persons = map(Persons, tibblify, spec)) %>% 
+
+  # Unnest the list of named lists, making one row per person
+  unnest(Persons) 
+  
+  
+####--------------------------- validation tests ---------------------------####
+persons %>%
+  group_by(CaseYear, ST_CASE, VEH_NO, NUMOCCS) %>%
+  summarise(n = n()) %>%
+  ungroup() %>%
+  filter(NUMOCCS != n) %>%
+  nrow() %>%
+  testthat::expect_equal(0)
+
+####-------------------------- Clean up the data ---------------------------####
+persons %>%
+  
+  mutate(PER_NO = as.numeric(PER_NO)) %>%
+  
+  #----- AGE (pg 253) -----#
+  mutate(AGE = na_if(AGE, "998"), # N/A if 999 or 998
+         AGE = na_if(AGE, "999"),
+         AGE = as.numeric(AGE)) %>%
+  
+  #----- SEX (pg 254) -----#
+  mutate(SEX = ifelse(SEX %in% c("Male", "Female"), SEX, NA)) %>%
+  
+  #----- PER_TYP (pg 255) -----#
+  # In this case, we don't have Non-Occupants
+  mutate(PER_TYP = case_when(PER_TYP=="1" ~ "Driver",
+                             PER_TYP=="2" ~ "Passenger",
+                             PER_TYP=="9" ~ "Unknown",
+                             TRUE         ~ "Other"),
+         PER_TYP = na_if(PER_TYP, "Unknown")) %>%
+  select(-PER_TYPNAME) %>%
+  
+  #----- INJ_SEV (pg 257) -----#
+  # Does it based on KABCO scale, so we'll make a new column
+  mutate(KABCO = case_when(INJ_SEV=="4" ~ "K",
+                           INJ_SEV=="3" ~ "A",
+                           INJ_SEV=="2" ~ "B",
+                           INJ_SEV=="1" ~ "C",
+                           INJ_SEV=="0" ~ "O"), # this is 'o' not zero
+         INJ_SEV = case_when(INJ_SEV=="4" ~ "Fatal",
+                             INJ_SEV=="3" ~ "Serious",
+                             INJ_SEV=="2" ~ "Minor",
+                             INJ_SEV=="1" ~ "Possible",
+                             INJ_SEV=="0" ~ "Uninjured",
+                             INJ_SEV=="9" ~ "Unknown"),
+         INJ_SEV = na_if(INJ_SEV, "Unknown")) %>%
+  select(-INJ_SEVNAME) %>%
+  relocate(KABCO, .after = INJ_SEV) %>%
+  
+  #----- DOA (pg 279) -----#
+  #----- LAG_HRS/MINS (pg 280) -----#
+  #----- DEATH_YR (pg 282) -----#
+  # Make some new columns here: 
+  #
+  # > `died`: a logical column for if they died
+  #      If the injury severity is marked as fatal they will be marked as TRUE 
+  #      (meaning they died). If the DEATH_YR is 8888 (meaning Not Applicable)  
+  #      they are marked as FALSE
+  #
+  # > `died_where`: categorical column for where they died
+  #      This is mainly based on the DOA column. Those who lived will be marked 
+  #      as 'Survived', while who were unspecified if they were DOA (but did die)
+  #      will be marked as 'Unknown'.
+  #         At this point we are left with people who have died (or have an  
+  #      unknown death status) but were marked as Not Applicable for DOA, 
+  #      implying that they survived the trip to a medical facility. We'll assume   
+  #      they were transported for treatment (HOSPITAL != "0"), so we mark these 
+  #      fatalities as happening in the hospital. An implicit assumption here 
+  #      is that cases where HOSPITAL was Not Reported (8) or Reported as 
+  #      Unknown (9) these folks were actually brought to the hospital.
+  #         Finally, this leaves us with people who died, were marked N/A for DOA
+  #      (or during transport), **and** that were not transported for treatment.
+  #      Admittedly, this is a small group of people, but they do exist. I have
+  #      no earthly idea what happened here (first responders let them go home
+  #      and they showed up dying later in the ED?), so I mark these as '????' 
+  # > `died_timing`: merging LAG_HRS + LAG_MINS
+  #      If they didn't die (or timing data is missing) make it NA. Otherwise,
+  #      join these two columns together to indicate the duration from the crash
+  #      to the time they died
+
+  mutate(died = case_when(INJ_SEV=="Fatal" ~ TRUE,
+                          DEATH_YR=="8888" ~ FALSE),
+         died_where  = case_when(
+           DOA=="7"               ~ "At scene",
+           DOA=="8"               ~ "En Route",
+           !died                  ~ "Survived", 
+           died & DOA=="9"        ~ "Unknown",
+           died & HOSPITAL != "0" ~ "Hospital",
+           TRUE                   ~ "????"),
+         died_timing = case_when(
+           !died             ~ NA,
+           LAG_HRS == "999"  ~ NA,
+           LAG_MINS == "999" ~ NA,
+           TRUE              ~ str_glue("{LAG_HRS}:{str_pad(LAG_MINS, 2, pad = '0')}"))) %>%
+  relocate(died, died_where, died_timing, .after = KABCO) %>%
+  select(-c(DOA, DOANAME, LAG_HRS, LAG_MINS, DEATH_YR)) %>%
+  
+  #----- HOSPITAL (pg 273) -----#
+  mutate(HOSPITAL = case_when(HOSPITAL=="0" ~ "Not Transported",
+                              HOSPITAL=="1" ~ "EMS Air",
+                              HOSPITAL=="3" ~ "EMS Unknown Mode",
+                              HOSPITAL=="5" ~ "EMS Ground",
+                              HOSPITAL=="2" ~ "Law Enforcement",
+                              HOSPITAL=="6" ~ "Other",
+                              HOSPITAL=="8" ~ "Unknown",
+                              HOSPITAL=="9" ~ "Unknown"),
+         HOSPITAL = na_if(HOSPITAL, "Unknown")) %>%
+  select(-HOSPITALNAME) %>%
+  
+  
+  #----- EXTRICAT (pg 264) -----#
+  #----- EJECTION (pg 262) -----#
+  mutate(EXTRICAT = case_when(EXTRICAT=="0" ~ FALSE,
+                              EXTRICAT=="1" ~ TRUE),
+         EJECTION = case_when(EJECTION=="0" ~ FALSE,
+                              EJECTION=="1" ~ TRUE,
+                              EJECTION=="2" ~ TRUE,
+                              EJECTION=="3" ~ TRUE)) %>%
+  select(-EXTRICATNAME, -EJECTIONNAME) %>%
+
+  #----- REST_USE (pg 255) -----#
+  # Put N/A with other
+  mutate(REST_USE = as.numeric(REST_USE),
+         REST_USE = case_when(
+           REST_USE %in% c(1:3)      ~ "Seatbelt",
+           REST_USE %in% c(5,16,19)  ~ "Helmet",
+           REST_USE %in% c(10:12)    ~ "Child Restraint",
+           REST_USE %in% c(7,20)     ~ "None",
+           REST_USE %in% c(17)       ~ "No helmet",
+           REST_USE %in% c(29,98,99) ~ "Unknown",
+           REST_USE %in% c(0,8,97)   ~ "Other",
+           TRUE                      ~ REST_USENAME)) %>%
+  select(-REST_USENAME) %>%
+    
+  #----- AIR_BAG (pg 260) -----#
+  mutate(AIR_BAG = as.numeric(AIR_BAG),
+         AIR_BAG = case_when(
+           AIR_BAG %in% c(1:9) ~ TRUE,
+           AIR_BAG == 20       ~ FALSE)) %>%
+  select(-AIR_BAGNAME) %>%
+  
+  #----- ALC_RES (pg 269) -----#
+  # Renaming to BAC
+  mutate(BAC = as.numeric(ALC_RES),
+         BAC = ifelse(BAC>940, NA, BAC),
+         BAC = BAC/1000) %>%
+  relocate(BAC, .before = DRUGS) %>%
+  select(-starts_with("ALC_RES"))
+
+rm(spec)
+```
+
+# Export to CSV
+
+TODO
+
+
+
+```{r}
+sessioninfo::session_info()
+```
