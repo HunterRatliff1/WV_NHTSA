@@ -2,6 +2,10 @@
 title: "NHTSA Crashes"
 author: "Hunter Ratliff"
 date: "2023-08-10"
+params:
+  write_csv:
+    label: "Write to CSV?"
+    value: FALSE
 output: 
   html_document: 
     toc: yes
@@ -526,7 +530,10 @@ vehicles <- vehicles %>%
       
       BODY_TYP %in% c(42, 92, 95, 97) ~ "Other (specified)",
       BODY_TYP %in% c(9, 49, 72, 78, 98, 99) ~ "Unknown",
-  ))
+  )) %>%
+  
+  # Fix an encoding issue
+  mutate(MAK_MOD = str_replace(MAK_MOD, "–", "-"))
 
 #Temporary list of the Body's, used to print below
 temp.ls <- vehicles %>% 
@@ -1135,7 +1142,7 @@ rm(cases_json, vehicles_nested)
 Now we'll take these tables and write them to CSVs. To prevent inadvertently overwriting data, you'll need to toggle the flag below to get it to work.
 
 ```{r write-csvs}
-write_to_file <- FALSE
+write_to_file <- params$write_csv
 
 if(write_to_file) {
   cases           %>% readr::write_csv(here("NHTSA_CSV", "cases.csv"))
