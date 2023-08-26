@@ -106,12 +106,12 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2015,540077,1,1,1,FALSE,25320,FALSE,FALSE,80,Motorcycle,Suzuki 0-50cc,2006,Motorcycle,Not Distracted,None/Apparently Normal
 1,2015,540078,1,1,1,FALSE,20895,FALSE,FALSE,80,Motorcycle,Ducati 450-749cc,2013,Motorcycle,Not Distracted,Unknown
 1,2015,540079,1,1,1,TRUE,25271,FALSE,FALSE,2,"2-door sedan,hardtop,coupe",Chevrolet Cavalier,2003,Sedan,Not Distracted,Unknown
-2,2015,540080,1,1,0,FALSE,26722,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy – Unknown engine location,1984,Truck-tractor,Not Distracted,None/Apparently Normal
+2,2015,540080,1,1,0,FALSE,26722,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy - Unknown engine location,1984,Truck-tractor,Not Distracted,None/Apparently Normal
 2,2015,540080,2,1,1,FALSE,26726,FALSE,FALSE,30,"Compact pickup (GVWR <4,500 lbs.) (D50,Colt P/U, Ram 50, Dakota, Arrow Pickup [foreign], Ranger, ..)",Dodge Dakota,2004,Pickup,Not Distracted,Asleep or Fatigued
 1,2015,540081,1,2,2,FALSE,21557,FALSE,FALSE,80,Motorcycle,Harley-Davidson 750cc or greater,2012,Motorcycle,Not Distracted,Unknown
 2,2015,540082,1,1,0,FALSE,26201,FALSE,FALSE,4,"4-door sedan, hardtop",Datsun/Nissan 810/Maxima,1999,Sedan,Not Distracted,None/Apparently Normal
 2,2015,540082,2,1,1,FALSE,26447,TRUE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350,....)",Ford F-Series pickup,2003,Pickup,Not Distracted,None/Apparently Normal
-2,2015,540083,1,1,0,FALSE,26651,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy – CBE,1999,Truck-tractor,Not Distracted,None/Apparently Normal
+2,2015,540083,1,1,0,FALSE,26651,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy - CBE,1999,Truck-tractor,Not Distracted,None/Apparently Normal
 2,2015,540083,2,1,1,FALSE,26261,FALSE,FALSE,80,Motorcycle,Harley-Davidson 750cc or greater,2009,Motorcycle,Not Distracted,None/Apparently Normal
 1,2015,540084,1,2,1,FALSE,44011,FALSE,FALSE,90,ATV/ATC [All-Terrain Cycle],Honda 350cc or greater (ATV),2001,ATV/Off road,Not Distracted,Unknown
 1,2015,540085,1,1,1,FALSE,25979,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350,....)",Ford F-Series pickup,1996,Pickup,Not Distracted,Unknown
@@ -127,7 +127,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 3,2015,540093,2,1,1,FALSE,15205,FALSE,FALSE,4,"4-door sedan, hardtop",Ford Fusion,2016,Sedan,Not Distracted,None/Apparently Normal
 3,2015,540093,3,2,0,FALSE,15057,FALSE,FALSE,6,Station Wagon (excluding van and truck based),Buick / Opel Enclave (2008-12 model years only.  For 2013 on see model 421.),2012,Sedan,Not Distracted,None/Apparently Normal
 2,2015,540094,1,1,1,FALSE,26206,FALSE,FALSE,4,"4-door sedan, hardtop",Subaru Impreza,1996,Sedan,Not Distracted,None/Apparently Normal
-2,2015,540094,2,1,0,FALSE,26681,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Kenworth Medium/Heavy – COE high entry,2013,Truck-tractor,Not Distracted,None/Apparently Normal
+2,2015,540094,2,1,0,FALSE,26681,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Kenworth Medium/Heavy - COE high entry,2013,Truck-tractor,Not Distracted,None/Apparently Normal
 1,2015,540095,1,1,1,FALSE,24832,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Honda CR-V,2002,Utility/Minivan,Not Distracted,Unknown
 2,2015,540096,1,1,0,FALSE,26330,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350,....)",Dodge Ram Pickup,2011,Pickup,Not Distracted,None/Apparently Normal
 2,2015,540096,2,2,1,FALSE,26267,FALSE,FALSE,30,"Compact pickup (GVWR <4,500 lbs.) (D50,Colt P/U, Ram 50, Dakota, Arrow Pickup [foreign], Ranger, ..)",Toyota Tacoma,2005,Pickup,Not Distracted,None/Apparently Normal
@@ -304,7 +304,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 2,2015,540214,2,1,1,FALSE,16503,FALSE,FALSE,2,"2-door sedan,hardtop,coupe",Honda Accord,1999,Sedan,Not Distracted,None/Apparently Normal
 2,2015,540215,1,1,1,FALSE,45239,TRUE,FALSE,4,"4-door sedan, hardtop",Mazda Mazda3,2007,Sedan,Not Distracted,None/Apparently Normal
 2,2015,540215,2,3,1,FALSE,25239,FALSE,FALSE,5,5-door/4-door hatchback,Toyota Prius *,2007,Sedan,Not Distracted,None/Apparently Normal
-2,2015,540216,1,1,0,FALSE,15558,TRUE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy – Unknown engine location,2007,Truck-tractor,Not Distracted,None/Apparently Normal
+2,2015,540216,1,1,0,FALSE,15558,TRUE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy - Unknown engine location,2007,Truck-tractor,Not Distracted,None/Apparently Normal
 2,2015,540216,2,1,1,FALSE,75762,FALSE,FALSE,40,"Cab Chassis Based (includes Rescue Vehicle, Light Stake, Dump, and Tow Truck)","Chevrolet C, K, R, V-series pickup/Silverado",2007,Straight truck,Not Distracted,None/Apparently Normal
 1,2015,540217,1,1,1,TRUE,24817,FALSE,FALSE,90,ATV/ATC [All-Terrain Cycle],Honda Unknown cc (ATV),2001,ATV/Off road,Not Distracted,Under the Influence
 1,2015,540218,1,1,1,TRUE,26554,FALSE,FALSE,4,"4-door sedan, hardtop",Toyota Yaris,2007,Sedan,Not Distracted,Under the Influence
@@ -349,7 +349,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 2,2015,540246,1,2,2,FALSE,22728,FALSE,FALSE,4,"4-door sedan, hardtop",Honda Accord,2003,Sedan,Not Distracted,None/Apparently Normal
 2,2015,540246,2,1,1,FALSE,26763,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350,....)",Ford F-Series pickup,2001,Pickup,Not Distracted,None/Apparently Normal
 2,2015,540247,1,1,1,FALSE,45701,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Jeep / Kaiser-Jeep / Willys- Jeep YJ series/Wrangler,2016,Utility/Minivan,Not Distracted,None/Apparently Normal
-2,2015,540247,2,1,0,FALSE,44667,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy – Unknown engine location,2011,Truck-tractor,Not Distracted,None/Apparently Normal
+2,2015,540247,2,1,0,FALSE,44667,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy - Unknown engine location,2011,Truck-tractor,Not Distracted,None/Apparently Normal
 2,2015,540248,1,1,1,FALSE,25425,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Pontiac Torrent,2006,Utility/Minivan,Not Distracted,None/Apparently Normal
 2,2015,540248,2,1,0,FALSE,25430,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Toyota FJ Cruiser,2014,Utility/Minivan,Not Distracted,None/Apparently Normal
 2,2015,540249,1,2,1,FALSE,22637,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350,....)",Ford F-Series pickup,2000,Pickup,Not Distracted,None/Apparently Normal
@@ -396,7 +396,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2016,540031,1,1,1,FALSE,20181,FALSE,FALSE,80,Motorcycle,Honda 750 cc or greater,2001,Motorcycle,Not Distracted,None/Apparently Normal
 2,2016,540032,1,2,1,TRUE,25304,FALSE,FALSE,4,"4-door sedan, hardtop","Honda Accord (Note: For Crosstour model years 2010 and 2011 only. For Crosstour model years 2012-2015, see vehicle model 37-405)",2003,Sedan,Not Distracted,Unknown
 2,2016,540032,2,1,0,FALSE,25314,FALSE,FALSE,15,"Large utility (ANSI D16.1 Utility Vehicle Categories and ""Full Size"" and ""Large"")",Buick / Opel Enclave (2013 on.  See model 024 for 2008-12 model years.),2014,Utility/Minivan,Not Distracted,None/Apparently Normal
-2,2016,540033,1,1,0,FALSE,26261,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy – Unknown engine location,2015,Truck-tractor,Not Distracted,None/Apparently Normal
+2,2016,540033,1,1,0,FALSE,26261,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy - Unknown engine location,2015,Truck-tractor,Not Distracted,None/Apparently Normal
 2,2016,540033,2,1,1,FALSE,26601,FALSE,FALSE,30,"Compact pickup (GVWR <4,500 lbs.) (D50,Colt P/U, Ram 50, Dakota, Arrow Pickup [foreign], Ranger, ..)",Toyota Tacoma,2012,Pickup,Not Distracted,None/Apparently Normal
 2,2016,540034,1,1,0,FALSE,25314,FALSE,FALSE,15,"Large utility (ANSI D16.1 Utility Vehicle Categories and ""Full Size"" and ""Large"")",GMC Fullsize Jimmy/Yukon,2009,Utility/Minivan,Not Distracted,None/Apparently Normal
 2,2016,540034,2,4,3,FALSE,NonUS,FALSE,FALSE,20,"Minivan (Chrysler Town and Country, Caravan, Grand Caravan, Voyager, Voyager, Honda-Odyssey, ...)",Dodge Caravan/Grand Caravan,2011,Utility/Minivan,Not Distracted,None/Apparently Normal
@@ -444,7 +444,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2016,540063,1,1,0,FALSE,NA,NA,TRUE,99,Unknown body type,"Unknown Make Unknown (as to automobile, motored cycle, light truck or truck)",NA,Unknown,Unknown if Distracted,Unknown
 1,2016,540064,1,2,1,TRUE,25404,FALSE,FALSE,4,"4-door sedan, hardtop",Mitsubishi Galant,2010,Sedan,Not Distracted,Under the Influence
 1,2016,540065,1,5,1,FALSE,26833,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Dodge Durango (1998-2003 only; see model 422 for 2004 on),1999,Utility/Minivan,Not Distracted,Under the Influence
-1,2016,540066,1,2,0,FALSE,26034,FALSE,FALSE,63,"Single-unit straight truck or Cab-Chassis (GVWR > 26,000 lbs.)",Volvo Medium/Heavy – CBE,2012,Straight truck,Not Distracted,Unknown
+1,2016,540066,1,2,0,FALSE,26034,FALSE,FALSE,63,"Single-unit straight truck or Cab-Chassis (GVWR > 26,000 lbs.)",Volvo Medium/Heavy - CBE,2012,Straight truck,Not Distracted,Unknown
 2,2016,540067,1,1,1,FALSE,25443,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Jeep / Kaiser-Jeep / Willys- Jeep Patriot,2016,Utility/Minivan,Not Distracted,Unknown
 2,2016,540067,2,1,0,FALSE,25404,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Nissan/Datsun Titan (from 2004-06; see 481 for 2007 on),2004,Pickup,Not Distracted,None/Apparently Normal
 2,2016,540068,1,1,1,FALSE,25245,FALSE,FALSE,80,Motorcycle,Yamaha 750cc or greater,2014,Motorcycle,Not Distracted,None/Apparently Normal
@@ -519,7 +519,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2016,540120,1,1,1,FALSE,24740,FALSE,FALSE,4,"4-door sedan, hardtop",Saturn LS,2002,Sedan,Not Distracted,None/Apparently Normal
 1,2016,540121,1,2,1,FALSE,26301,FALSE,FALSE,97,"Other vehicle type (includes go-cart, fork-lift, city street sweeper dunes/swamp buggy)",Other Make Other (vehicle),1971,Other (specified),Not Distracted,None/Apparently Normal
 2,2016,540122,1,1,1,FALSE,26205,FALSE,FALSE,6,Station Wagon (excluding van and truck based),"Nissan/Datsun Rogue (For 2008-2018 only.  For model years 2019 on, see 35-404.)",2012,Sedan,Not Distracted,None/Apparently Normal
-2,2016,540122,2,1,0,FALSE,26206,FALSE,FALSE,78,Unknown medium/heavy truck type,Peterbilt Medium/Heavy – Unknown engine location,1998,Unknown,Not Distracted,None/Apparently Normal
+2,2016,540122,2,1,0,FALSE,26206,FALSE,FALSE,78,Unknown medium/heavy truck type,Peterbilt Medium/Heavy - Unknown engine location,1998,Unknown,Not Distracted,None/Apparently Normal
 1,2016,540123,1,1,1,TRUE,26501,FALSE,FALSE,80,Motorcycle,Honda 750 cc or greater,1995,Motorcycle,Not Distracted,Unknown
 2,2016,540124,1,3,0,FALSE,26521,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)","Chevrolet C, K, R, V-series pickup/Silverado",1989,Pickup,Not Distracted,None/Apparently Normal
 2,2016,540124,2,1,1,FALSE,26361,FALSE,FALSE,80,Motorcycle,Harley-Davidson 750cc or greater,2006,Motorcycle,Not Distracted,None/Apparently Normal
@@ -528,7 +528,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2016,540126,1,1,1,TRUE,24701,TRUE,FALSE,80,Motorcycle,Honda 750 cc or greater,2006,Motorcycle,Not Distracted,Unknown
 1,2016,540127,1,2,1,FALSE,26217,FALSE,FALSE,20,"Minivan (Chrysler Town and Country, Caravan, Grand Caravan, Voyager, Voyager, Honda-Odyssey, ...)",KIA Sedona,2005,Utility/Minivan,Not Distracted,None/Apparently Normal
 1,2016,540128,1,1,1,TRUE,25504,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Ford F-Series pickup,2013,Pickup,Not Distracted,Under the Influence
-1,2016,540129,1,1,1,FALSE,24844,FALSE,FALSE,63,"Single-unit straight truck or Cab-Chassis (GVWR > 26,000 lbs.)",Peterbilt Medium/Heavy – COE low entry,2005,Straight truck,Not Distracted,Unknown
+1,2016,540129,1,1,1,FALSE,24844,FALSE,FALSE,63,"Single-unit straight truck or Cab-Chassis (GVWR > 26,000 lbs.)",Peterbilt Medium/Heavy - COE low entry,2005,Straight truck,Not Distracted,Unknown
 1,2016,540130,1,2,1,TRUE,25271,TRUE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Ford F-Series pickup,1998,Pickup,Not Distracted,Under the Influence
 1,2016,540131,1,1,1,TRUE,25402,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Chevrolet Trax,2015,Utility/Minivan,Not Distracted,Under the Influence
 1,2016,540132,1,3,1,FALSE,26250,FALSE,FALSE,1,"Convertible(excludes sun-roof,t-bar)",Ford Mustang/Mustang II,1988,Sedan,Not Distracted,None/Apparently Normal
@@ -553,7 +553,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 2,2016,540149,1,1,1,TRUE,25315,FALSE,FALSE,4,"4-door sedan, hardtop",Chevrolet Sonic,2012,Sedan,Not Distracted,Unknown
 2,2016,540149,2,1,0,FALSE,25301,FALSE,FALSE,30,"Compact pickup (GVWR <4,500 lbs.) (D50,Colt P/U, Ram 50, Dakota, Arrow Pickup [foreign], Ranger, ..)",Nissan/Datsun Frontier (1998 on),2008,Pickup,Not Distracted,None/Apparently Normal
 2,2016,540150,1,5,1,FALSE,26519,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")","Ford Bronco (thru 1977)/Bronco II/Explorer/Explorer Sport (Explorer for 1990-2018 only.  For model years 2019 on, see 12-425.)",2000,Utility/Minivan,Not Distracted,None/Apparently Normal
-2,2016,540150,2,1,0,FALSE,NonUS,FALSE,FALSE,63,"Single-unit straight truck or Cab-Chassis (GVWR > 26,000 lbs.)",Freightliner Medium/Heavy – COE entry position unknown,2007,Straight truck,Not Distracted,None/Apparently Normal
+2,2016,540150,2,1,0,FALSE,NonUS,FALSE,FALSE,63,"Single-unit straight truck or Cab-Chassis (GVWR > 26,000 lbs.)",Freightliner Medium/Heavy - COE entry position unknown,2007,Straight truck,Not Distracted,None/Apparently Normal
 1,2016,540151,1,1,1,FALSE,25160,FALSE,FALSE,90,ATV/ATC [All-Terrain Cycle],Honda Unknown cc (ATV),2004,ATV/Off road,Not Distracted,None/Apparently Normal
 1,2016,540152,1,1,1,FALSE,26501,FALSE,FALSE,4,"4-door sedan, hardtop",Toyota Corolla,2010,Sedan,Not Distracted,None/Apparently Normal
 1,2016,540153,1,1,1,TRUE,26133,FALSE,FALSE,30,"Compact pickup (GVWR <4,500 lbs.) (D50,Colt P/U, Ram 50, Dakota, Arrow Pickup [foreign], Ranger, ..)",Chevrolet S-10/T-10 Pickup,1998,Pickup,Not Distracted,Unknown
@@ -570,16 +570,16 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2016,540164,1,1,1,FALSE,26241,FALSE,FALSE,80,Motorcycle,Harley-Davidson 750cc or greater,2000,Motorcycle,Not Distracted,None/Apparently Normal
 1,2016,540165,1,1,1,TRUE,26554,TRUE,FALSE,80,Motorcycle,Harley-Davidson 750cc or greater,2015,Motorcycle,Not Distracted,Under the Influence
 1,2016,540166,1,3,1,FALSE,24986,TRUE,FALSE,2,"2-door sedan,hardtop,coupe",Chevrolet Monte Carlo (1995 on),1997,Sedan,Not Distracted,Under the Influence
-4,2016,540167,1,1,1,FALSE,26508,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy – Unknown engine location,2002,Truck-tractor,Not Distracted,None/Apparently Normal
+4,2016,540167,1,1,1,FALSE,26508,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy - Unknown engine location,2002,Truck-tractor,Not Distracted,None/Apparently Normal
 4,2016,540167,2,0,0,FALSE,NA,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Freightliner Medium/Heavy - CBE,2013,Truck-tractor,No Driver Present/Unknown if Driver present,No Driver Present/Unknown if Driver Present
 4,2016,540167,3,0,0,FALSE,NA,FALSE,FALSE,64,Single-unit straight truck or Cab-Chassis (GVWR unknown),Kenworth Medium/Heavy - CBE,2007,Straight truck,No Driver Present/Unknown if Driver present,No Driver Present/Unknown if Driver Present
-4,2016,540167,4,1,0,FALSE,19401,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",International Harvester/Navistar Medium/Heavy – Unknown engine location,2015,Truck-tractor,Not Distracted,Unknown
-6,2016,540168,1,2,0,FALSE,37322,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",International Harvester/Navistar Medium/Heavy – Unknown engine location,2015,Truck-tractor,Not Distracted,None/Apparently Normal
-6,2016,540168,2,1,0,FALSE,28394,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy – Unknown engine location,2014,Truck-tractor,Not Distracted,None/Apparently Normal
+4,2016,540167,4,1,0,FALSE,19401,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",International Harvester/Navistar Medium/Heavy - Unknown engine location,2015,Truck-tractor,Not Distracted,Unknown
+6,2016,540168,1,2,0,FALSE,37322,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",International Harvester/Navistar Medium/Heavy - Unknown engine location,2015,Truck-tractor,Not Distracted,None/Apparently Normal
+6,2016,540168,2,1,0,FALSE,28394,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy - Unknown engine location,2014,Truck-tractor,Not Distracted,None/Apparently Normal
 6,2016,540168,3,3,0,FALSE,25313,FALSE,FALSE,4,"4-door sedan, hardtop",Saturn Ion,2007,Sedan,Not Distracted,None/Apparently Normal
 6,2016,540168,4,2,0,FALSE,28327,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Toyota Highlander,2010,Utility/Minivan,Not Distracted,None/Apparently Normal
-6,2016,540168,5,1,0,FALSE,55310,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Kenworth Medium/Heavy – Unknown engine location,1999,Truck-tractor,Not Distracted,None/Apparently Normal
-6,2016,540168,6,1,1,FALSE,45831,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",International Harvester/Navistar Medium/Heavy – Unknown engine location,2013,Truck-tractor,Not Distracted,None/Apparently Normal
+6,2016,540168,5,1,0,FALSE,55310,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Kenworth Medium/Heavy - Unknown engine location,1999,Truck-tractor,Not Distracted,None/Apparently Normal
+6,2016,540168,6,1,1,FALSE,45831,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",International Harvester/Navistar Medium/Heavy - Unknown engine location,2013,Truck-tractor,Not Distracted,None/Apparently Normal
 2,2016,540169,1,1,0,FALSE,27053,TRUE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Kenworth Medium/Heavy - CBE,2015,Truck-tractor,Not Distracted,None/Apparently Normal
 2,2016,540169,2,1,1,FALSE,26351,FALSE,FALSE,4,"4-door sedan, hardtop",Chevrolet Sonic,2016,Sedan,Not Distracted,None/Apparently Normal
 2,2016,540170,1,2,1,FALSE,24851,FALSE,FALSE,90,ATV/ATC [All-Terrain Cycle],Honda 125-349cc (ATV),1992,ATV/Off road,Not Distracted,Unknown
@@ -590,7 +590,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2016,540173,1,1,0,TRUE,26426,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Toyota Tundra,2013,Pickup,Not Distracted,Under the Influence
 2,2016,540174,1,1,1,TRUE,25064,TRUE,FALSE,80,Motorcycle,Harley-Davidson 750cc or greater,2011,Motorcycle,Not Distracted,Unknown
 2,2016,540174,2,1,0,FALSE,25302,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Freightliner Medium/Heavy - CBE,1999,Truck-tractor,Not Distracted,None/Apparently Normal
-2,2016,540175,1,2,0,FALSE,15461,FALSE,FALSE,64,Single-unit straight truck or Cab-Chassis (GVWR unknown),International Harvester/Navistar Medium/Heavy – Unknown engine location,2011,Straight truck,Not Distracted,None/Apparently Normal
+2,2016,540175,1,2,0,FALSE,15461,FALSE,FALSE,64,Single-unit straight truck or Cab-Chassis (GVWR unknown),International Harvester/Navistar Medium/Heavy - Unknown engine location,2011,Straight truck,Not Distracted,None/Apparently Normal
 2,2016,540175,2,6,3,FALSE,15317,FALSE,FALSE,20,"Minivan (Chrysler Town and Country, Caravan, Grand Caravan, Voyager, Voyager, Honda-Odyssey, ...)",Chrysler Town and Country,2015,Utility/Minivan,Not Distracted,None/Apparently Normal
 2,2016,540176,1,2,1,TRUE,25411,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",GMC Jimmy/Typhoon/Envoy,1999,Utility/Minivan,Not Distracted,Under the Influence
 2,2016,540176,2,1,0,FALSE,25427,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Ford F-Series pickup,2004,Pickup,Not Distracted,None/Apparently Normal
@@ -604,22 +604,22 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 2,2016,540180,2,1,0,FALSE,25704,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Jeep / Kaiser-Jeep / Willys- Jeep Patriot,2016,Utility/Minivan,Not Distracted,None/Apparently Normal
 2,2016,540181,1,2,0,FALSE,26101,FALSE,FALSE,21,"Large Van-Includes van-based buses (B150-B350, Sportsman, Royal Maxiwagon, Ram, Tradesman,...)",Ford E-Series Van/Econoline,2014,Bus/Large van,Not Distracted,Unknown
 2,2016,540181,2,1,1,FALSE,26101,FALSE,FALSE,2,"2-door sedan,hardtop,coupe",Chevrolet Camaro,1992,Sedan,Not Distracted,Unknown
-2,2016,540182,1,1,0,FALSE,25427,FALSE,FALSE,67,"Medium/heavy Pickup (>10,000 lbs. GVWR)","Dodge Medium/Heavy Pickup (pickup-style only – over 10,000 lbs)",2011,Pickup,Not Distracted,None/Apparently Normal
+2,2016,540182,1,1,0,FALSE,25427,FALSE,FALSE,67,"Medium/heavy Pickup (>10,000 lbs. GVWR)","Dodge Medium/Heavy Pickup (pickup-style only - over 10,000 lbs)",2011,Pickup,Not Distracted,None/Apparently Normal
 2,2016,540182,2,1,1,FALSE,26763,FALSE,FALSE,6,Station Wagon (excluding van and truck based),Subaru Legacy/Outback(prior to 2003 only; see 045 for 2003 on),2000,Sedan,Not Distracted,None/Apparently Normal
 4,2016,540183,1,1,0,FALSE,25253,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Dodge Dakota,1998,Pickup,Not Distracted,None/Apparently Normal
 4,2016,540183,2,1,1,FALSE,25702,FALSE,FALSE,20,"Minivan (Chrysler Town and Country, Caravan, Grand Caravan, Voyager, Voyager, Honda-Odyssey, ...)",Chevrolet Astro Van,1997,Utility/Minivan,Not Distracted,None/Apparently Normal
 2,2016,540184,1,2,1,FALSE,25524,FALSE,FALSE,2,"2-door sedan,hardtop,coupe",Chevrolet Cobalt,2006,Sedan,Not Distracted,None/Apparently Normal
-2,2016,540184,2,1,0,FALSE,25508,FALSE,FALSE,61,"Single-unit straight truck or Cab-Chassis (10,000 lbs. < GVWR < or = 19,500 lbs.)",Ford Medium/Heavy – CBE,2008,Straight truck,Not Distracted,None/Apparently Normal
+2,2016,540184,2,1,0,FALSE,25508,FALSE,FALSE,61,"Single-unit straight truck or Cab-Chassis (10,000 lbs. < GVWR < or = 19,500 lbs.)",Ford Medium/Heavy - CBE,2008,Straight truck,Not Distracted,None/Apparently Normal
 4,2016,540185,1,1,0,FALSE,11234,TRUE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Freightliner Medium/Heavy - CBE,2015,Truck-tractor,Not Distracted,None/Apparently Normal
 4,2016,540185,2,1,1,FALSE,15301,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Toyota Tundra,2011,Pickup,Not Distracted,None/Apparently Normal
 4,2016,540185,3,1,0,FALSE,15301,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Ford F-Series pickup,2015,Pickup,Not Distracted,None/Apparently Normal
 4,2016,540185,4,1,0,FALSE,78248,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Ford F-Series pickup,2013,Pickup,Not Distracted,None/Apparently Normal
-1,2016,540186,1,1,1,FALSE,78537,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy – Unknown engine location,2004,Truck-tractor,Not Distracted,None/Apparently Normal
+1,2016,540186,1,1,1,FALSE,78537,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy - Unknown engine location,2004,Truck-tractor,Not Distracted,None/Apparently Normal
 1,2016,540187,1,1,1,TRUE,26342,FALSE,FALSE,30,"Compact pickup (GVWR <4,500 lbs.) (D50,Colt P/U, Ram 50, Dakota, Arrow Pickup [foreign], Ranger, ..)",Toyota Tacoma,2010,Pickup,Not Distracted,Unknown
 1,2016,540188,1,1,1,FALSE,25427,FALSE,FALSE,2,"2-door sedan,hardtop,coupe",Chevrolet Cobalt,2009,Sedan,Not Distracted,Unknown
 1,2016,540189,1,2,1,FALSE,25557,FALSE,FALSE,4,"4-door sedan, hardtop",Chevrolet Cavalier,2001,Sedan,Not Distracted,None/Apparently Normal
 1,2016,540190,1,1,1,FALSE,23237,TRUE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Toyota 4-Runner,2001,Utility/Minivan,Not Distracted,None/Apparently Normal
-1,2016,540191,1,2,1,FALSE,90031,TRUE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy – CBE,2010,Truck-tractor,Not Distracted,None/Apparently Normal
+1,2016,540191,1,2,1,FALSE,90031,TRUE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy - CBE,2010,Truck-tractor,Not Distracted,None/Apparently Normal
 1,2016,540192,1,1,1,FALSE,24426,FALSE,FALSE,30,"Compact pickup (GVWR <4,500 lbs.) (D50,Colt P/U, Ram 50, Dakota, Arrow Pickup [foreign], Ranger, ..)",Ford Ranger,1988,Pickup,Not Distracted,Unknown
 1,2016,540193,1,2,1,TRUE,22150,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Saturn Vue,2005,Utility/Minivan,Not Distracted,Under the Influence
 1,2016,540194,1,3,1,FALSE,24868,FALSE,FALSE,4,"4-door sedan, hardtop",Ford Taurus/Taurus X,1999,Sedan,Not Distracted,None/Apparently Normal
@@ -637,7 +637,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2016,540203,1,1,1,TRUE,21538,TRUE,FALSE,90,ATV/ATC [All-Terrain Cycle],Yamaha 350cc or greater (ATV),NA,ATV/Off road,Not Distracted,Under the Influence
 1,2016,540204,1,1,1,TRUE,26361,FALSE,FALSE,90,ATV/ATC [All-Terrain Cycle],Honda 125-349cc (ATV),2002,ATV/Off road,Not Distracted,Unknown
 2,2016,540205,1,1,1,FALSE,24701,FALSE,FALSE,4,"4-door sedan, hardtop",Chevrolet Malibu/Malibu Maxx,2016,Sedan,Not Distracted,Unknown
-2,2016,540205,2,1,0,FALSE,24910,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Kenworth Medium/Heavy – Unknown engine location,2005,Truck-tractor,Not Distracted,None/Apparently Normal
+2,2016,540205,2,1,0,FALSE,24910,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Kenworth Medium/Heavy - Unknown engine location,2005,Truck-tractor,Not Distracted,None/Apparently Normal
 2,2016,540206,1,2,1,FALSE,26452,FALSE,FALSE,30,"Compact pickup (GVWR <4,500 lbs.) (D50,Colt P/U, Ram 50, Dakota, Arrow Pickup [foreign], Ranger, ..)",Chevrolet S-10/T-10 Pickup,2004,Pickup,Not Distracted,None/Apparently Normal
 2,2016,540206,2,1,0,FALSE,26201,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Chevrolet Equinox,2015,Utility/Minivan,Not Distracted,None/Apparently Normal
 2,2016,540207,1,1,0,TRUE,44669,TRUE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Honda CR-V,2015,Utility/Minivan,Not Distracted,Under the Influence
@@ -655,7 +655,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 12,2016,540212,3,1,1,FALSE,25419,FALSE,FALSE,4,"4-door sedan, hardtop",Ford Escort/EXP/ZX2,2002,Sedan,Not Distracted,None/Apparently Normal
 12,2016,540212,4,1,0,FALSE,22655,FALSE,FALSE,4,"4-door sedan, hardtop",Ford Taurus/Taurus X,2015,Sedan,Not Distracted,Unknown
 12,2016,540212,5,1,0,FALSE,25401,FALSE,FALSE,2,"2-door sedan,hardtop,coupe",Toyota Celica,2003,Sedan,Not Distracted,None/Apparently Normal
-12,2016,540212,6,1,0,FALSE,91406,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy – Unknown engine location,2015,Truck-tractor,Not Distracted,None/Apparently Normal
+12,2016,540212,6,1,0,FALSE,91406,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Peterbilt Medium/Heavy - Unknown engine location,2015,Truck-tractor,Not Distracted,None/Apparently Normal
 12,2016,540212,7,1,0,FALSE,17268,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Mazda CX5,2014,Utility/Minivan,Not Distracted,None/Apparently Normal
 12,2016,540212,8,1,0,FALSE,25405,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)","Chevrolet C, K, R, V-series pickup/Silverado",2004,Pickup,Not Distracted,None/Apparently Normal
 12,2016,540212,9,1,0,FALSE,28468,FALSE,FALSE,20,"Minivan (Chrysler Town and Country, Caravan, Grand Caravan, Voyager, Voyager, Honda-Odyssey, ...)",Honda Odyssey,2010,Utility/Minivan,Not Distracted,None/Apparently Normal
@@ -685,7 +685,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 2,2016,540227,1,1,0,FALSE,24970,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Jeep / Kaiser-Jeep / Willys- Jeep YJ series/Wrangler,2015,Utility/Minivan,Not Distracted,Unknown
 2,2016,540227,2,1,1,FALSE,24426,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Dodge Ram Pickup,1996,Pickup,Not Distracted,None/Apparently Normal
 2,2016,540228,1,2,1,FALSE,25504,FALSE,FALSE,2,"2-door sedan,hardtop,coupe",Chevrolet Camaro,1998,Sedan,"Distraction (Distracted), Details Unknown",Under the Influence
-2,2016,540228,2,2,0,FALSE,45631,FALSE,FALSE,62,"Single-unit straight truck or Cab-Chassis (19,500 lbs. < GVWR < or = 26,000 lbs.)",Peterbilt Medium/Heavy – Unknown engine location,2012,Straight truck,Not Distracted,None/Apparently Normal
+2,2016,540228,2,2,0,FALSE,45631,FALSE,FALSE,62,"Single-unit straight truck or Cab-Chassis (19,500 lbs. < GVWR < or = 26,000 lbs.)",Peterbilt Medium/Heavy - Unknown engine location,2012,Straight truck,Not Distracted,None/Apparently Normal
 1,2016,540229,1,1,0,FALSE,25031,FALSE,TRUE,4,"4-door sedan, hardtop",Nissan/Datsun 810/Maxima,2008,Sedan,Not Distracted,None/Apparently Normal
 1,2016,540230,1,1,0,FALSE,25843,FALSE,TRUE,4,"4-door sedan, hardtop",Subaru Legacy/Outback(prior to 2003 only; see 045 for 2003 on),2012,Sedan,Not Distracted,None/Apparently Normal
 1,2016,540231,1,1,1,TRUE,25669,FALSE,FALSE,31,"Standard pickup (GVWR 4,500 to 10,00 lbs.)(Jeep Pickup, Comanche, Ram Pickup, D100-D350, ......)",Ford F-Series pickup,2006,Pickup,Not Distracted,Unknown
@@ -1921,11 +1921,11 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 2,2020,540027,1,4,1,FALSE,25276,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Suzuki Grand Vitara (2003 on; see model 402 for models prior to 2003),2008,Utility/Minivan,Not Distracted,None/Apparently Normal
 2,2020,540027,2,1,0,TRUE,25276,FALSE,FALSE,15,"Large utility (ANSI D16.1 Utility Vehicle Categories and ""Full Size"" and ""Large"")",GMC Acadia (2013 on. For 2007-2012 see model 008.),2015,Utility/Minivan,Not Reported,Under the Influence
 2,2020,540028,1,2,1,TRUE,21740,TRUE,FALSE,2,"2-door sedan,hardtop,coupe","Honda Civic/CRX, del Sol",2008,Sedan,"Distracted by Outside Person, Object or Event",Unknown
-2,2020,540028,2,2,0,FALSE,19116,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy – CBE,2019,Truck-tractor,Not Distracted,None/Apparently Normal
+2,2020,540028,2,2,0,FALSE,19116,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy - CBE,2019,Truck-tractor,Not Distracted,None/Apparently Normal
 2,2020,540029,1,1,1,TRUE,25103,TRUE,FALSE,20,"Minivan (Chrysler Town and Country, Caravan, Grand Caravan, Voyager, Voyager, Honda-Odyssey, ...)",Chevrolet Uplander,2007,Utility/Minivan,Not Reported,None/Apparently Normal
 2,2020,540029,2,2,0,FALSE,25015,FALSE,FALSE,20,"Minivan (Chrysler Town and Country, Caravan, Grand Caravan, Voyager, Voyager, Honda-Odyssey, ...)",Dodge Caravan/Grand Caravan,2014,Utility/Minivan,Not Distracted,None/Apparently Normal
 1,2020,540030,1,1,1,TRUE,25674,TRUE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Jeep / Kaiser-Jeep / Willys- Jeep YJ series/Wrangler,2012,Utility/Minivan,Not Reported,None/Apparently Normal
-2,2020,540031,1,1,0,FALSE,41564,FALSE,FALSE,61,"Single-unit straight truck or Cab-Chassis (GVWR range 10,001 to 19,500 lbs.)",Dodge Medium/Heavy – CBE,2018,Straight truck,Not Distracted,None/Apparently Normal
+2,2020,540031,1,1,0,FALSE,41564,FALSE,FALSE,61,"Single-unit straight truck or Cab-Chassis (GVWR range 10,001 to 19,500 lbs.)",Dodge Medium/Heavy - CBE,2018,Straight truck,Not Distracted,None/Apparently Normal
 2,2020,540031,2,1,1,FALSE,25048,FALSE,FALSE,20,"Minivan (Chrysler Town and Country, Caravan, Grand Caravan, Voyager, Voyager, Honda-Odyssey, ...)",Chevrolet Astro Van,2005,Utility/Minivan,Not Reported,None/Apparently Normal
 1,2020,540032,1,1,0,FALSE,26525,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Chevrolet Equinox,2014,Utility/Minivan,While Manipulating Mobile Phone,None/Apparently Normal
 2,2020,540033,1,2,0,TRUE,25801,FALSE,FALSE,34,Light Pickup,"Chevrolet C, K, R, V-series pickup/Silverado",2013,Pickup,Not Distracted,None/Apparently Normal
@@ -1968,7 +1968,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 2,2020,540058,1,1,1,FALSE,25951,FALSE,FALSE,4,"4-door sedan, hardtop",Chevrolet Cruze,2017,Sedan,Not Reported,None/Apparently Normal
 2,2020,540058,2,2,0,TRUE,25825,TRUE,FALSE,4,"4-door sedan, hardtop",Dodge Charger,2019,Sedan,Not Reported,Under the Influence
 2,2020,540059,1,1,1,FALSE,78504,FALSE,FALSE,80,Two Wheel Motorcycle (excluding motor scooters),Yamaha 750cc or greater,2014,Motorcycle,Not Reported,None/Apparently Normal
-2,2020,540059,2,1,0,FALSE,25420,FALSE,FALSE,63,"Single-unit straight truck or Cab-Chassis (GVWR greater than 26,000 lbs.)",Mack Medium/Heavy – COE entry position unknown,2006,Straight truck,Not Distracted,None/Apparently Normal
+2,2020,540059,2,1,0,FALSE,25420,FALSE,FALSE,63,"Single-unit straight truck or Cab-Chassis (GVWR greater than 26,000 lbs.)",Mack Medium/Heavy - COE entry position unknown,2006,Straight truck,Not Distracted,None/Apparently Normal
 1,2020,540060,1,2,2,TRUE,25517,TRUE,FALSE,34,Light Pickup,Dodge Ram Pickup,1998,Pickup,Not Reported,Unknown
 1,2020,540061,1,3,1,FALSE,25309,TRUE,FALSE,15,"Large utility (ANSI D16.1 Utility Vehicle Categories and ""Full Size"" and ""Large"")",Chevrolet Suburban (from 2004 on; see 431 for 1950-2003),2012,Utility/Minivan,Not Reported,None/Apparently Normal
 1,2020,540062,1,2,1,TRUE,24970,TRUE,FALSE,34,Light Pickup,Dodge Ram Pickup,2017,Pickup,Not Reported,Under the Influence
@@ -1997,7 +1997,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2020,540076,1,2,1,FALSE,25404,FALSE,FALSE,4,"4-door sedan, hardtop",Mitsubishi Lancer/Lancer Sportback/ Lancer Evolution,2011,Sedan,Not Reported,Under the Influence
 1,2020,540077,1,1,1,FALSE,25427,FALSE,FALSE,4,"4-door sedan, hardtop",Toyota Camry,2007,Sedan,Not Reported,None/Apparently Normal
 2,2020,540078,1,1,1,FALSE,21157,FALSE,FALSE,67,"Medium/heavy Pickup (GVWR greater than 10,000 lbs.)","Ford Medium/Heavy Pickup (pickup-style only - over 10,000 lbs)",2016,Pickup,Reported as Unknown if Distracted,None/Apparently Normal
-2,2020,540078,2,1,0,FALSE,24354,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy – CBE,2019,Truck-tractor,Not Distracted,None/Apparently Normal
+2,2020,540078,2,1,0,FALSE,24354,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy - CBE,2019,Truck-tractor,Not Distracted,None/Apparently Normal
 1,2020,540079,1,1,1,TRUE,26452,FALSE,FALSE,90,ATV/ATC [All-Terrain Cycle],Yamaha 350cc or greater (ATV),2001,ATV/Off road,Not Reported,None/Apparently Normal
 1,2020,540080,1,2,1,TRUE,25901,FALSE,FALSE,90,ATV/ATC [All-Terrain Cycle],Honda 350cc or greater (ATV),2020,ATV/Off road,Not Reported,Other Physical Impairment
 4,2020,540081,1,1,0,FALSE,25437,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Subaru Forester,2009,Utility/Minivan,While Talking or Listening to Mobile Phone,None/Apparently Normal
@@ -2082,7 +2082,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 1,2020,540135,1,2,1,FALSE,7306,TRUE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Freightliner Medium/Heavy - CBE,2013,Truck-tractor,Not Reported,None/Apparently Normal
 2,2020,540136,1,1,1,FALSE,25033,FALSE,FALSE,96,Recreational Off-Highway Vehicle,Other Make 350cc or greater (ATV),2005,ATV/Off road,Not Reported,Unknown
 2,2020,540136,2,1,0,FALSE,25287,FALSE,FALSE,4,"4-door sedan, hardtop",Chevrolet Cruze,2012,Sedan,Not Reported,None/Apparently Normal
-2,2020,540137,1,1,1,FALSE,25514,FALSE,FALSE,61,"Single-unit straight truck or Cab-Chassis (GVWR range 10,001 to 19,500 lbs.)",Ford Medium/Heavy – CBE,1995,Straight truck,Not Distracted,None/Apparently Normal
+2,2020,540137,1,1,1,FALSE,25514,FALSE,FALSE,61,"Single-unit straight truck or Cab-Chassis (GVWR range 10,001 to 19,500 lbs.)",Ford Medium/Heavy - CBE,1995,Straight truck,Not Distracted,None/Apparently Normal
 2,2020,540137,2,3,1,TRUE,25514,TRUE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",GMC Terrain,2010,Utility/Minivan,Not Reported,Under the Influence
 2,2020,540139,1,1,0,FALSE,26101,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Freightliner Medium/Heavy - CBE,2014,Truck-tractor,Not Reported,None/Apparently Normal
 2,2020,540139,2,1,1,FALSE,26101,FALSE,FALSE,14,"Compact Utility (Utility Vehicle Categories ""Small"" and ""Midsize"")",Chevrolet Captiva,2012,Utility/Minivan,Not Reported,None/Apparently Normal
@@ -2140,7 +2140,7 @@ totalvehicles,CaseYear,ST_CASE,VEH_NO,NUMOCCS,DEATHS,DR_DRINK,DR_ZIP,SPEEDREL,HI
 2,2020,540177,1,1,1,FALSE,47042,FALSE,FALSE,80,Two Wheel Motorcycle (excluding motor scooters),Harley-Davidson 750cc or greater,2012,Motorcycle,Not Distracted,None/Apparently Normal
 2,2020,540177,2,1,0,FALSE,62803,FALSE,FALSE,80,Two Wheel Motorcycle (excluding motor scooters),Harley-Davidson 750cc or greater,2010,Motorcycle,Not Distracted,None/Apparently Normal
 1,2020,540179,1,1,1,FALSE,26836,FALSE,FALSE,80,Two Wheel Motorcycle (excluding motor scooters),Kawasaki 750cc or greater,2020,Motorcycle,Reported as Unknown if Distracted,None/Apparently Normal
-1,2020,540180,1,2,1,FALSE,93711,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy – CBE,2016,Truck-tractor,Reported as Unknown if Distracted,Unknown
+1,2020,540180,1,2,1,FALSE,93711,FALSE,FALSE,66,"Truck-tractor (Cab only, or with any number of trailing unit; any weight)",Volvo Medium/Heavy - CBE,2016,Truck-tractor,Reported as Unknown if Distracted,Unknown
 2,2020,540181,1,1,1,FALSE,25661,FALSE,FALSE,5,5-door/4-door hatchback,Toyota Prius *,2013,Sedan,Not Reported,None/Apparently Normal
 2,2020,540181,2,2,0,TRUE,25670,TRUE,FALSE,15,"Large utility (ANSI D16.1 Utility Vehicle Categories and ""Full Size"" and ""Large"")",Chevrolet Fullsize Blazer/Tahoe,2012,Utility/Minivan,Not Reported,Under the Influence
 1,2020,540182,1,1,0,FALSE,25320,FALSE,FALSE,34,Light Pickup,Dodge Dakota,2004,Pickup,Not Distracted,None/Apparently Normal
