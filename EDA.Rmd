@@ -42,6 +42,14 @@ library(tmap)
 library(tigris)
 options(tigris_class = "sf")
 options(tigris_use_cache = TRUE)
+
+comment_header <- function(txt, width=80){
+  padding <- (width - str_length(txt))/2
+  padding <- floor(padding) - 5
+  
+  str_glue('####{str_dup("-",padding)} {txt} {str_dup("-",padding)}####')
+  
+}
 ```
 
 # Read in data
@@ -282,7 +290,7 @@ naniar::vis_miss(df_persons, sort_miss=T)
 naniar::gg_miss_upset(df_persons)
 ```
 
-We can start by tackling the `EJECTION` data in Figure \@ref(fig:ejection-missing). When we stratify this by the vehicle type[^1], we quickly see that almost 95% of these cases are appropriately marked as N/A because they were driving a motorcycle / ATV / off road vehicle. 
+We can start by tackling the `EJECTION` data in Figure \@ref(fig:ejection-missing). When we stratify this by the vehicle type[^1], we quickly see that almost 95% of these cases are appropriately marked as N/A because they were driving a motorcycle / ATV / off road vehicle.
 
 [^1]: This requires merging the persons data.frame with the vehicles data.frame
 
@@ -348,9 +356,9 @@ df_persons %>%
   summarise(n = sum(n))
 ```
 
-We can also see that these vehicles account for a fair share of the missing `AIR_BAG` data, but a good proportion (~10%) of the missing data are not motorcycles/ATVs (Figure \@ref(fig:ejection-missing)). Additionally, there appear to be a trend in temporality, similar to what we saw in the distractions data. Figure \@ref(fig:airbag-missing) shows this trend
+We can also see that these vehicles account for a fair share of the missing `AIR_BAG` data, but a good proportion (\~10%) of the missing data are not motorcycles/ATVs (Figure \@ref(fig:ejection-missing)). Additionally, there appear to be a trend in temporality, similar to what we saw in the distractions data. Figure \@ref(fig:airbag-missing) shows this trend
 
-```{r airbag-missing, fig.cap="*Temporal trends in airbag deployment*"} 
+```{r airbag-missing, fig.cap="*Temporal trends in airbag deployment*"}
 temp.df <- df_persons %>%
   mutate(AIRBAG = case_when(
     is.na(AIR_BAG) ~ "Missing",
@@ -372,8 +380,7 @@ temp.df %>%
 rm(temp.df)
 ```
 
-
-Lastly, we need to look into the variable that had the most missing data, `BAC`. Figure \@ref(fig:bac-missing) shows that passengers are more likely to have misisng BAC levels, but drivers still have a high proportion who don't have a BAC level recorded (~50%). 
+Lastly, we need to look into the variable that had the most missing data, `BAC`. Figure \@ref(fig:bac-missing) shows that passengers are more likely to have misisng BAC levels, but drivers still have a high proportion who don't have a BAC level recorded (\~50%).
 
 ```{r bac-missing, fig.cap="*Missing person data by person type*"}
 df_persons %>%
@@ -390,17 +397,13 @@ df_persons %>%
 #     filter(variable=="BAC")
 ```
 
-
-
-
-
-# Stuff
+# Bivaraite stuff
 
 ```{r}
 df_vehicles %>%
   select(CaseYear:HIT_RUN, Body, DISTRACT, IMPAIR, totalvehicles) %>%
   left_join(select(df_cases, CaseYear, ST_CASE, LONGITUD, LATITUDE, WEATHERNAME)) %>%
-  st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs=4269) %>%
+  st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs=6602) %>%
   ggplot() +
   geom_sf(aes(color=DR_DRINK), alpha=.15)
   # summary()
@@ -413,9 +416,7 @@ df_vehicles %>%
 
 # Geography
 
-```{r geography-data, eval=F}
-
-
+```{r download-tigris}
 library(sf)
 library(mapview)
 library(mapboxapi)
@@ -426,43 +427,245 @@ library(tigris)
 options(tigris_class = "sf")
 options(tigris_use_cache = TRUE)
 
-wv_counties <- tigris::counties(state = "WV", cb=T)
+# # Find the ideal CRS for this area
+# crsuggest::suggest_crs(wv_counties)
+WV_crs <- "NAD83" # 6602 works well too, but must read in FARS data using NAD83
+
+# Download geography data
+wv_counties <- tigris::counties(state = "WV", cb=T) %>%
+  st_transform(crs = WV_crs)
+wv_tract    <- tigris::tracts(state = "WV", cb=T) %>%
+  st_transform(crs = WV_crs)
+wv_cbg      <- tigris::block_groups(state = "WV", cb=T) %>%
+  st_transform(crs = WV_crs)
 wv_roads <- tigris::primary_secondary_roads("WV")
 
-# wv_roads <- tigris::primary_secondary_roads("WV")
-# roads <- roads("WV", "Monongalia")
-# primary_roads()
+# # Background tiles for pretty mapping
+# wv_cbg_tiles <- mapboxapi::get_static_tiles(
+#   location = wv_counties,
+#   zoom = 7,
+#   style_id = "cll13kko400rd01p4chtqcbdi",
+#   username = "hunterratliff1"
+# )
+```
 
-# Background tiles for pretty mapping
-wv_cbg_tiles <- mapboxapi::get_static_tiles(
-  location = wV_counties,
-  zoom = 7,
-  style_id = "cll13kko400rd01p4chtqcbdi",
-  username = "hunterratliff1"
-)
+## Get local hospitals
+
+We can download the US Department of Homeland Security's [Homeland Infrastructure Foundation-Level Data (HIFLD)](https://hifld-geoplatform.hub.arcgis.com/) hospitals [data file](https://hifld-geoplatform.opendata.arcgis.com/datasets/75079bdea94743bcaca7b6e833692639/explore).
+
+```{r download-hospital-locations}
+# Hospital locations
+hospital_url <- "https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Hospital/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
+
+hospitals <- st_read(hospital_url) %>%
+  filter(STATUS=="OPEN", !TYPE %in% c("CHILDREN", "PSYCHIATRIC", "REHABILITATION", "LONG TERM CARE", "SPECIAL")) %>%
+  select(ID, NAME, ADDRESS, CITY, STATE, ZIP, TYPE, NAICS_DESC, OWNER, BEDS, TRAUMA, HELIPAD) %>%
+  st_transform(WV_crs) %>%
+  distinct(ID, .keep_all = TRUE) %>%
+  st_filter(st_transform(wv_counties, WV_crs),
+            .predicate = st_is_within_distance,
+            dist = 10000) #Within 10km of the border
+
+rm(hospital_url)
+
+# hospitals %>%
+#   mapview()
+
+# https://hifld-geoplatform.opendata.arcgis.com/maps/emergency-medical-service-ems-stations
+# https://hifld-geoplatform.opendata.arcgis.com/maps/public-health-departments
+# https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Urgent_Care_Facilities/FeatureServer/0
+# https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Pharmacies/FeatureServer/0
+
+
+```
+
+```{r}
+hospitals %>%
+  mapview(zcol="TRAUMA")
+```
+
+## Distance calculations
+
+In order to calculate the distances, we can either use `sf::st_distance()` to calculate the distance directly or `mapboxapi::mb_matrix()` to calculate the driving time. However, the MapBox API limits the "maximum number of coordinates" to 25 and the number of requests to 300 per minute (five per second).
+
+This means that something like `mb_matrix(wv_counties, hospitals)` won't work, as this would be a `r nrow(wv_counties)` by `r nrow(hospitals)` matrix. In the past, I've gotten [around similar problems](https://www.hunterratliff1.com/post/geographical-distribution-of-neurosurgeons/#find-closest-provider-for-each-county) somewhat by just finding the closest point for each polygon, but this time we're using drive times which [can be more nuanced](https://walker-data.com/census-r/spatial-analysis-with-us-census-data.html#catchment-areas-with-buffers-and-isochrones).
+
+To accomplish this task, we will need to to take a few different steps (and make some assumptions). First, we need to narrow down our [search space](https://dba.stackexchange.com/questions/274153/what-is-search-space-when-it-comes-to-query-optimization) to find more reasonable candidate solutions. After all, we don't need to compare every location (e.g. county, location of crash) to every single hospital; instead we could calculate the travel time to the nearest 5-15 hospitals (instead of all `r nrow(hospitals)`) and take it from there.
+
+The function below takes a set of locations[^2] (`geo_polys`) and calculates the distance matrix to each of the provided points (`geo_points`). For each `geo_polys`, it then keeps the `n_closest` number of results and returns that in a tidy style data.frame
+
+[^2]: These can be either polygons (e.g. counties, census tracts, census block groups) or points themselves (e.g. locations of crashes). In the event that polygons are provided, it uses the distance from the centroid
+
+```{r, eval=F, include=F}
+pt <- st_sfc(st_point(c(0,0)), st_point(c(0,3)), st_point(c(5,0))) 
+print(pt)
+plot(pt)
+st_distance(pt, pt)
+rm(pt)
+```
+
+```{r fxn1}
+# mb_matrix(head(wv_counties), hospitals)
+# mb_matrix(wv_counties, head(hospitals))
+
+# get_dist <- function(county, sleep_time=0.2){
+#   
+#   Sys.sleep(sleep_time)
+#   times <- mb_matrix(county, hospitals)
+#   apply(times, 1, min)
+# }
+
+
+  
+#   
+# head(wv_counties) %>% 
+#   mutate(x = geometry %>% map(function(x) x))
+ 
+
+fxn1 <- function(geo_polys, geo_points, n_closest = 10,
+                 name_polys="GEOID", name_points="ID"){
+#' Get the distance matrix in a tidy format, and return the closest points
+#'
+#' @param geo_polys A sf object of either "MULTIPOLYGON" or "POINT" type. If
+#'                  a polygon is used, distance is calculated by the centroid of
+#'                  the polygon
+#' @param geo_points A "POINT" sf object 
+#' @param n_closest The number of items to return per geo_polys. For example
+#'                  the default (10) returns the ten closest geo_points for each
+#'                  geo_polys
+#' @param name_polys The name of the column in geo_polys to use as names. 
+#'                   Defaults to "GEOID"  
+#' @param name_points The name of the column in geo_points to use as names. 
+#'                    Defaults to "ID"  
+#' @return Tidy dataframe
+#' @examples
+#' function(wv_counties, hospitals)
+  
+  
+  ####--------------------------- Pre-processing ---------------------------####
+  # Make the CRS match, using the poly geom
+  # st_crs(geo_points) <- st_crs(geo_polys)
+  
+  # Get the type of geometries
+  geo_polys_type  <- as.character(st_geometry_type(geo_polys)[[1]])
+  geo_points_type <- as.character(st_geometry_type(geo_points)[[1]])
+  
+  # Test to see if centroids should be used (will be yes if not points)
+  centroids <- geo_polys_type != "POINT"
+  
+  ####------------- Run some tests to check for correct inputs -------------####
+    
+  # inputs are sf objects
+  testthat::expect_s3_class(geo_polys, "sf")
+  testthat::expect_s3_class(geo_points, "sf")
+  
+  # Correct geometries
+  testthat::expect_in(geo_polys_type, c("MULTIPOLYGON", "POINT"))
+  testthat::expect_equal(geo_points_type, "POINT")
+  
+  # Same CRS
+  testthat::expect_equal(st_crs(geo_polys)[[1]], st_crs(geo_points)[[1]])
+
+  # Column names are in supplies data.frames
+  testthat::expect_length(geo_polys[[name_polys]], nrow(geo_polys))
+  testthat::expect_length(geo_points[[name_points]], nrow(geo_points))
+    
+  
+  ####----------------------- Get the distance matrix ----------------------####
+  # For each geo_polys to look up, calculate the distance to all of the 
+  # geo_points. This returns a wide matrix with each row being a geo_poly
+  # and column being a geo_point
+  if(centroids){
+    # Use the centroids
+    dist <- geo_polys %>%
+      st_centroid() %>%
+      st_distance(geo_points)
+  } 
+  if(!centroids){
+    dist <- geo_polys %>%
+      st_distance(geo_points)
+  }
+  
+  ####---------------------- Make it a tidy data.frame ----------------------####
+  df <- dist %>%
+    as.data.frame() %>%
+    mutate(GEOID = geo_polys[[name_polys]]) %>%
+    relocate(GEOID, .before=V1)
+  
+  # Rename the columns as supplied by `name_points`
+  names(df) <- c(name_polys, geo_points[[name_points]])
+  
+  
+  df %>%
+    # Make long format, creating 3 columns: name_polys, name_points, and distance
+    pivot_longer(cols      = -all_of(name_polys), 
+                 names_to  = name_points,
+                 values_to = "Distance") %>%
+    
+    # For each of the `geo_polys`, limit results to the `n_closest` `geo_points`
+    slice_min(n        = n_closest,
+              order_by = Distance,
+              by       = name_polys)
+}
+
+# x <- fxn1(wv_tract, hospitals, n_closest = 5) 
+```
+
+```{r}
+fxn1(wv_cbg, filter(hospitals, str_detect(TRAUMA, "LEVEL")), n_closest = 1) %>%
+  # group_by(GEOID) %>%
+  # filter(Distance==min(Distance)) %>%
+  inner_join(wv_cbg, by = join_by(GEOID)) %>%
+  mutate(Distance = as.numeric(Distance/1000)) %>%
+  st_as_sf() %>%
+  ggplot() +
+  geom_sf(aes(fill=Distance), color=NA) +
+  geom_sf(data = df_cases %>%
+            st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs="NAD83"), 
+          alpha=0.1) +
+  geom_sf(data=filter(hospitals, str_detect(TRAUMA, "LEVEL")), color="red") +
+  theme_void() +
+  labs(title = "Distance to trauma center, by CBG",
+       subtitle = "Black dots = fatal crashes; red dots = trauma centers",
+       fill="Distance (km)",
+       caption="Note: Distances are from centroid of census block group\nUS Census Bureau, US Dept Homeland Security, NHTSA")
+```
+
+```{r, eval=F}
+# Conceptually, what we can do is shown below:
+# Pick a number (n_closest) to find the closest number of hospitals to the area
+# then find the distance to the farthest of these hospitals
+
+fxn1(wv_tract, hospitals, n_closest = 5)  %>%
+  # Find the distance from the fifth farthest hospital
+  group_by(GEOID) %>%
+  filter(Distance==max(Distance)) %>%
+  
+  # Join this distance to our data and make a circle around the centroid
+  # of that geography
+  inner_join(wv_tract, by = join_by(GEOID)) %>%
+  mutate(geometry = st_centroid(geometry),
+         geometry = st_buffer(geometry, dist=Distance)) %>%
+  st_as_sf() %>%
+  ggplot() + 
+  geom_sf(color="red") +
+  geom_sf(data=wv_tract, alpha=0.5) +
+  geom_sf(data=hospitals, alpha=0.5)
 ```
 
 ```{r, eval=F}
 temp.df <- df_persons %>%
   left_join(select(df_cases, CaseYear, ST_CASE, LONGITUD, LATITUDE, WEATHERNAME)) %>%
   filter(str_detect(HOSPITAL, "EMS")) %>%
-  st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs=4269)
+  st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs=WV_crs)
 
 wv_counties %>% 
   ggplot() +
   geom_sf() + 
   geom_sf(aes(color=HOSPITAL), alpha=.25, data=temp.df) +
   facet_wrap("HOSPITAL")
-```
 
-```{r, eval=F}
-cases_json %>%
-  filter(CaseYear=="2015") %>%
-  st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs=4269) %>%
-  # mapview()
-  ggplot(alpha=.5) +
-  geom_sf(aes(color=DRUNK_DR)) +
-  geom_sf(data=wv_roads, alpha=0.25)
+rm(temp.df)
 ```
 
 ```{r}
