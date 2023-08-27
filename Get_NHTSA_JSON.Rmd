@@ -50,7 +50,7 @@ Although the API can handle more than one state, identified by FIPS (*Federal In
 Parameters for this function:
 
 | Parameter     | Definition                                                                                                 |
-|---------------|------------------------------------------------------------------------------------------------------------|
+|--------------------------|----------------------------------------------|
 | **`year`**    | The year of data you want to query                                                                         |
 | **`fmt`**     | Format that the data should be returned as. May be CSV (returns a table), or json (returns the json)       |
 | **`state`**   | FIPS state code to be used                                                                                 |
@@ -112,7 +112,7 @@ It's important to note that crashes are identified by combination of `st_case` *
 Parameters for this function:
 
 | Parameter        | Definition                                                                          |
-|------------------|-------------------------------------------------------------------------------------|
+|--------------------------|----------------------------------------------|
 | **`st_case_id`** | The `st_case ID` for the crash                                                      |
 | **`year`**       | The year of data                                                                    |
 | **`state`**      | FIPS state code to be used. Default is West Virginia (code 54)                      |
@@ -233,7 +233,7 @@ cases_json <- c(2015:2020) %>%
 The first data.frame we will make is the cases table, where each unique case (i.e. event) is identified by the combination of `CaseYear` and `ST_CASE`. From what I can tell, this comes from the **ACCIDENT** data file ([page 33](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=38) of the codebook)
 
 | Data item                   | Key                                                                                                                                                                                                                                     |
-|-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|--------------------------|----------------------------------------------|
 | `CaseYear`, `ST_CASE`       | Together these are primary keys that identify the case                                                                                                                                                                                  |
 | `crashDate`                 | The date-time of the crash                                                                                                                                                                                                              |
 | `LONGITUD`, `LATITUDE`      | The longitude & latitude of the crash                                                                                                                                                                                                   |
@@ -425,7 +425,7 @@ These are extracts from the **VEHICLE** data file ([page 91](https://crashstats.
 > Note: I will sometimes use the shorthand identification `{CaseYear}-{ST_CASE}-{VEH_NO}` to refer to specific data entries
 
 | Data item                       | Key                                                                                                                                             |
-|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+|--------------------------|----------------------------------------------|
 | `totalvehicles`                 | Total vehicles (pulled from the cases table)                                                                                                    |
 | `CaseYear`, `ST_CASE`, `VEH_NO` | Primary keys used to join to other tables                                                                                                       |
 | `NUMOCCS`                       | Number of occupants in the vehicle (pg 92)                                                                                                      |
@@ -872,7 +872,7 @@ violations_long %>%
 This is extracted from the **PERSON** data file ([page 247](https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813417#page=252)). Each row in this file is a person, identified by the unique combo of the primary keys `CaseYear`, `ST_CASE`, `VEH_NO`, and **`PER_NO`**. This does not include people who were not inside a motor vehicle, and in some cases not all occupants of the vehicle are included in this file (when `NUMOCCS` is NA). As in elsewhere in this file, new data items that are not defined in FARS are in bold
 
 | Data item               | Key                                                                                                                                                                           |
-|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|------------------------------------|------------------------------------|
 | `CaseYear`, `ST_CASE`   | Keys as defined in the **cases** table                                                                                                                                        |
 | `VEH_NO`, `NUMOCCS`     | Keys as defined in the **vehicles** table                                                                                                                                     |
 | `PER_NO`                | Unique identifier of the person in that vehicle (pg 31)                                                                                                                       |
