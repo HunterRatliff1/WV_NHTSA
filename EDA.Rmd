@@ -414,7 +414,7 @@ df_vehicles %>%
   
 ```
 
-# Geography
+# **Spatial Data**
 
 ```{r download-tigris}
 library(sf)
@@ -451,7 +451,7 @@ wv_roads <- tigris::primary_secondary_roads("WV")
 
 ## Get local hospitals
 
-We can download the US Department of Homeland Security's [Homeland Infrastructure Foundation-Level Data (HIFLD)](https://hifld-geoplatform.hub.arcgis.com/) hospitals [data file](https://hifld-geoplatform.opendata.arcgis.com/datasets/75079bdea94743bcaca7b6e833692639/explore).
+We can download the US Department of Homeland Security's [Homeland Infrastructure Foundation-Level Data (HIFLD)](https://hifld-geoplatform.hub.arcgis.com/) hospitals [data file](https://hifld-geoplatform.opendata.arcgis.com/datasets/75079bdea94743bcaca7b6e833692639/explore). Because patients can cross the border for medical care, we'll grab all of the hospitals within 25km of West Virginia.
 
 ```{r download-hospital-locations}
 # Hospital locations
@@ -464,7 +464,7 @@ hospitals <- st_read(hospital_url) %>%
   distinct(ID, .keep_all = TRUE) %>%
   st_filter(st_transform(wv_counties, WV_crs),
             .predicate = st_is_within_distance,
-            dist = 10000) #Within 10km of the border
+            dist = 25 * 1000) #Within 25km of the border
 
 rm(hospital_url)
 
@@ -484,68 +484,50 @@ hospitals %>%
   mapview(zcol="TRAUMA")
 ```
 
-## Distance calculations
+## Distance calculations {#distance-calculations}
 
 In order to calculate the distances, we can either use `sf::st_distance()` to calculate the distance directly or `mapboxapi::mb_matrix()` to calculate the driving time. However, the MapBox API limits the "maximum number of coordinates" to 25 and the number of requests to 300 per minute (five per second).
 
 This means that something like `mb_matrix(wv_counties, hospitals)` won't work, as this would be a `r nrow(wv_counties)` by `r nrow(hospitals)` matrix. In the past, I've gotten [around similar problems](https://www.hunterratliff1.com/post/geographical-distribution-of-neurosurgeons/#find-closest-provider-for-each-county) somewhat by just finding the closest point for each polygon, but this time we're using drive times which [can be more nuanced](https://walker-data.com/census-r/spatial-analysis-with-us-census-data.html#catchment-areas-with-buffers-and-isochrones).
 
-To accomplish this task, we will need to to take a few different steps (and make some assumptions). First, we need to narrow down our [search space](https://dba.stackexchange.com/questions/274153/what-is-search-space-when-it-comes-to-query-optimization) to find more reasonable candidate solutions. After all, we don't need to compare every location (e.g. county, location of crash) to every single hospital; instead we could calculate the travel time to the nearest 5-15 hospitals (instead of all `r nrow(hospitals)`) and take it from there.
+To accomplish this task, we will need to to take a few different steps (and make some assumptions). First, we need to narrow down our [search space](https://dba.stackexchange.com/questions/274153/what-is-search-space-when-it-comes-to-query-optimization) to find more reasonable candidate solutions. After all, we don't need to compare every location (e.g. county, location of crash) to every single hospital; instead we could calculate the travel time to the nearest couple of hospitals (instead of all `r nrow(hospitals)`) and take it from there.
 
-The function below takes a set of locations[^2] (`geo_polys`) and calculates the distance matrix to each of the provided points (`geo_points`). For each `geo_polys`, it then keeps the `n_closest` number of results and returns that in a tidy style data.frame
+The function below (**`fxn1`**) takes a set of locations[^2] (`geo_polys`) and calculates the distance matrix to each of the provided points (`geo_points`). For each `geo_polys`, it then keeps the `n_closest` number of results and returns that in a tidy style data.frame
 
 [^2]: These can be either polygons (e.g. counties, census tracts, census block groups) or points themselves (e.g. locations of crashes). In the event that polygons are provided, it uses the distance from the centroid
 
-```{r, eval=F, include=F}
-pt <- st_sfc(st_point(c(0,0)), st_point(c(0,3)), st_point(c(5,0))) 
-print(pt)
-plot(pt)
-st_distance(pt, pt)
-rm(pt)
-```
-
-```{r fxn1}
-# mb_matrix(head(wv_counties), hospitals)
-# mb_matrix(wv_counties, head(hospitals))
-
-# get_dist <- function(county, sleep_time=0.2){
-#   
-#   Sys.sleep(sleep_time)
-#   times <- mb_matrix(county, hospitals)
-#   apply(times, 1, min)
-# }
-
-
-  
-#   
-# head(wv_counties) %>% 
-#   mutate(x = geometry %>% map(function(x) x))
- 
-
-fxn1 <- function(geo_polys, geo_points, n_closest = 10,
+```{r fxn1, class.source = 'fold-show'}
+fxn1 <- function(geo_polys, geo_points, n_closest = 3,
                  name_polys="GEOID", name_points="ID"){
 #' Get the distance matrix in a tidy format, and return the closest points
+#' 
+#' PURPOSE: For each item in `geo_polys`, find the `n_closest` `geo_points`
+#'          and return that as a tidy data.frame with the distances listed
+#' 
+#' Calculates the distance matrix, using great circle distance, from all
+#' items in `geo_polys` to all items in `geo_points`. The matrix will be 
+#' quite large, nrow(geo_polys) by nrow(geo_points), so it will only return
+#' the `n_closest` items
 #'
 #' @param geo_polys A sf object of either "MULTIPOLYGON" or "POINT" type. If
 #'                  a polygon is used, distance is calculated by the centroid of
 #'                  the polygon
 #' @param geo_points A "POINT" sf object 
 #' @param n_closest The number of items to return per geo_polys. For example
-#'                  the default (10) returns the ten closest geo_points for each
+#'                  the default (5) returns the five closest geo_points for each
 #'                  geo_polys
 #' @param name_polys The name of the column in geo_polys to use as names. 
 #'                   Defaults to "GEOID"  
 #' @param name_points The name of the column in geo_points to use as names. 
 #'                    Defaults to "ID"  
-#' @return Tidy dataframe
-#' @examples
-#' function(wv_counties, hospitals)
+#' @return Tidy dataframe with three columns: name_polys, name_points, and the
+#'         distance between name_polys<-->name_points
   
   
   ####--------------------------- Pre-processing ---------------------------####
   # Make the CRS match, using the poly geom
   # st_crs(geo_points) <- st_crs(geo_polys)
-  
+  # c
   # Get the type of geometries
   geo_polys_type  <- as.character(st_geometry_type(geo_polys)[[1]])
   geo_points_type <- as.character(st_geometry_type(geo_points)[[1]])
@@ -611,7 +593,9 @@ fxn1 <- function(geo_polys, geo_points, n_closest = 10,
 # x <- fxn1(wv_tract, hospitals, n_closest = 5) 
 ```
 
-```{r}
+If we set `n_closest = 1`, then this lets us calculate the distance to the closest hospital. In Figure \@ref(fig:cbg-distance) below, hospitals that are a trauma center (of any level) are shown as red dots. The color of each census block group (CBG) represents the distance in kilometers from the centroid of the CBG to the trauma center. Finally, the light black dots are the fatal crashes (from the df_cases table).
+
+```{r cbg-distance, fig.cap="*Distance to trauma center, by CBG*"}
 fxn1(wv_cbg, filter(hospitals, str_detect(TRAUMA, "LEVEL")), n_closest = 1) %>%
   # group_by(GEOID) %>%
   # filter(Distance==min(Distance)) %>%
@@ -622,7 +606,7 @@ fxn1(wv_cbg, filter(hospitals, str_detect(TRAUMA, "LEVEL")), n_closest = 1) %>%
   geom_sf(aes(fill=Distance), color=NA) +
   geom_sf(data = df_cases %>%
             st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs="NAD83"), 
-          alpha=0.1) +
+          alpha=0.15) +
   geom_sf(data=filter(hospitals, str_detect(TRAUMA, "LEVEL")), color="red") +
   theme_void() +
   labs(title = "Distance to trauma center, by CBG",
@@ -631,31 +615,269 @@ fxn1(wv_cbg, filter(hospitals, str_detect(TRAUMA, "LEVEL")), n_closest = 1) %>%
        caption="Note: Distances are from centroid of census block group\nUS Census Bureau, US Dept Homeland Security, NHTSA")
 ```
 
+However, this still doesn't solve our drive time issue, which we will tackle in the next section
+
+## Drive times
+
+We will create a similar function for the drive time, called **`fxn2`**. This is similar to [fxn1](#distance-calculations) but has a few distinctions[^3]. The most important difference is the function below calls the [MapBox API](https://docs.mapbox.com/api/navigation/matrix/). MapBox's API has [free monthly limits](https://www.mapbox.com/pricing/#directionsmatrix), and given the size of this dataset this could get very expensive. Running this function on all of the data once would cost \$52 and running it twice would cost over \$300. Hence we need to make more focused API calls, which is [addressed below](#conceptual-approach).
+
+[^3]: An additional minor difference of fxn2 (compared to fxn1) is fxn2 doesn't limit the returned results to the n_closest results
+
+But before we worry about that, let's explore how **`fxn2`** works:
+
+```{r fxn2, class.source = 'fold-show'}
+fxn2 <- function(case_geo, hosp_geo, sleep_time=1,
+                 name_case="case_id", name_hosp="ID"){
+  #' Get the drivetime matrix in a tidy format
+  #'
+  #' @param case_geo A "POINT" sf object of starting points
+  #' @param hosp_geo A "POINT" sf object of destination points
+  #' @param sleep_time How long to pause before making the API call. Used to 
+  #'                   prevent timing out when making frequent API calls, 
+  #'                   particularity when using this function within `map()` 
+  #' @param name_case The name of the column in `case_geo` to use as IDs 
+  #'                   Defaults to "case_id"  
+  #' @param name_hosp The name of the column in `hosp_geo` to use as IDs 
+  #'                    Defaults to "ID"  
+  #' @return Tidy dataframe with three columns: `case_geo`, `hosp_geo`, and the
+  #'         driving time between case_geo<-->hosp_geo in minutes
+  
+  ####------------- Run some tests to check for correct inputs -------------####
+  
+  # inputs are sf objects
+  testthat::expect_s3_class(case_geo, "sf")
+  testthat::expect_s3_class(hosp_geo, "sf")
+  
+  # Same CRS
+  testthat::expect_equal(st_crs(case_geo)[[1]], st_crs(hosp_geo)[[1]])
+  
+  # Column names are in supplies data.frames
+  testthat::expect_in(name_case, names(case_geo))
+  testthat::expect_in(name_hosp, names(hosp_geo))
+  
+  ####---------------------- Get the drive time matrix ----------------------####
+  # Take a pause to prevent timeouts
+  Sys.sleep(sleep_time)
+  
+  # Call the API
+  times <- mapboxapi::mb_matrix(case_geo, hosp_geo, 
+                                allow_large_matrix=TRUE)
+  
+  ####------------------------ Create tidy dataframe ------------------------####
+  times %>%
+    
+    ### Convert matrix to data.frame. 
+    as.data.frame() %>%
+    # First, we add a row to the beginning (called case.id) the ID's supplied 
+    # by `name_case` column in `case_geo`.
+    mutate(case.id = case_geo[[name_case]]) %>%
+    relocate(case.id, .before=V1) %>%
+    # Next, we rename the columns. In the matrix retruned by MapBox, V1 
+    # corresponds to the first row of `hosp_geo`, V2 to the second row, etc
+    magrittr::set_names( c(name_case, hosp_geo[[name_hosp]]) ) %>%
+    
+    
+    ### Convert from wide to long format
+    pivot_longer(cols      = -all_of(name_case), 
+                 names_to  = name_hosp,
+                 values_to = "driving") 
+}
+```
+
+We can examine how **`fxn2`** works with a focused example (three crashes, two hospitals), as shown below:
+
+```{r fxn2-example-map}
+####-------------------------- Create sample data --------------------------####
+temp.cases <- df_cases %>%
+  mutate(case_id = str_glue("{CaseYear}_{ST_CASE}")) %>%
+  filter(case_id %in% c("2018_540175", 
+                        "2020_540104", 
+                        # "2018_540016",
+                        "2019_540210")) %>%
+  st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs="NAD83") %>%
+  mutate(case = LETTERS[row_number()])
+
+temp.hosp <- filter(hospitals, ID %in% c("0003326505", "0002426554")) %>%
+  mutate(NAME = case_when(ID == "0003326505" ~ "WVU",
+                          # ID == "0006326506" ~ "Mon General",
+                          ID == "0002426554" ~ "Fairmont General"))
+
+####------------------- Calculate distance & drive time --------------------####
+temp.dist  <- fxn1(temp.cases, temp.hosp, 
+                   name_polys = "case_id",
+                   name_points = "NAME") %>%
+  mutate(Distance = round(as.numeric(Distance)/1000,2))
+temp.drive <- fxn2(temp.cases, temp.hosp, name_hosp = "NAME") %>%
+  mutate(driving = round(as.numeric(driving)))
+
+####------------------------------ Create map ------------------------------####
+bind_rows(
+  select(temp.hosp, ID, NAME) %>% mutate(type = "Hospital"),
+  select(temp.cases, ID=case_id, NAME=case) %>% mutate(type = "Crash")
+) %>% mapview(zcol="type")
+```
+
+Below is Figure \@ref(fig:fxn2-example-fig), which shows the results of calling `fxn2` for three crashes and two hospitals (in the table). The graph also shows a comparison of the drive time in relation to the great circle distance between crashes and hospital locations.
+
+```{r fxn2-example-fig}
+#| fig.cap = "*Example of how fxn2 works*"
+full_join(temp.dist, temp.drive) %>%
+  ggplot(aes(x=Distance, y=driving, color=case_id, shape=NAME)) +
+  geom_point() +
+  annotate(geom = 'table',
+           x=30,
+           y=0,
+           label=list(pivot_wider(temp.drive, 
+                                  names_from = NAME, 
+                                  values_from = driving))) +
+  theme_bw() +
+  labs(x="Distance (km)", y="Drive time (mins)",
+       title="Comparison of distance to drive time",
+       subtitle = "Table shows drive time",
+       shape="Hospital")
+
+rm(temp.cases, temp.hosp, temp.dist, temp.drive)
+```
+
+### Conceptual approach {#conceptual-approach}
+
+Returning to the discussion above about limiting the search space, if we tried to find the distance for *all cases* to *all hospitals*, it would be a `r nrow(df_cases)` by `r nrow(hospitals)` matrix for the travel times, which would be `r scales::comma(nrow(df_cases) * nrow(hospitals))` results!
+
+The optimal solution would be to find the closest few hospitals (geographically) for each case and calculate the travel time on a cases-by-case basis. If we did this for the three closest hospitals, this would reduce our computational burden `r round((nrow(df_cases) * nrow(hospitals))/(nrow(df_cases)*3))`-fold. However, sending `r nrow(df_cases)` individual queries gets quite cumbersome (the API frequently times out), so I had to find another solution.
+
+The compromise I landed on was to "chunk" things into smaller groups, namely by county. So instead of determining the distance from *all cases* to *all hospitals*, I loop through the following [for each county]{.underline}:
+
+1.  Look at all of the cases in a county
+
+2.  Find the `r formals(fxn1)[["n_closest"]]` closest hospitals for each case within the county. The list of all of these hospitals becomes the hospitals we will look at for that county
+
+3.  For each county, query the driving time from all of the cases (in that county) to the hospitals identified in step 2
+
+```{r}
+by_county <- df_cases %>%
+  mutate(case_id = str_glue("{CaseYear}_{ST_CASE}")) %>%
+
+  # Make a list, with the df split by county
+  split(df_cases$COUNTYNAME) %>%
+  
+  # Add the geometries
+  map(\(df) st_as_sf(df, coords = c("LONGITUD", "LATITUDE"), crs="NAD83")) 
+```
+
+```{r fxn3, class.source = 'fold-show'}
+fxn3 <- function(df_cases, df_hosp, output="travel"){
+  
+  # Make sure provided output is valid
+  output <- rlang::arg_match(output, c("travel", "hosp"))
+  
+  hosp <- fxn1(geo_polys = df_cases, 
+               geo_points = df_hosp, 
+               name_polys = "case_id") %>%
+    semi_join(df_hosp, ., by = join_by(ID))
+  
+  if(output=="hosp") return(hosp)
+  
+  fxn2(case_geo = df_cases, hosp_geo = hosp)
+}
+
+# Create a version of fxn3 
+fxn3_possible <- purrr::possibly(fxn3, NA_real_)
+  
+# fxn3(by_county[[1]], hospitals)
+```
+
+asdasd
+
+```{r show-matrix-size, cache=TRUE}
+tibble(county  = names(by_county),
+       crashes = map_int(by_county, nrow),
+       hospitals = map_int(by_county, \(df){
+         fxn3(df, df_hosp=hospitals, output="hosp") %>%
+          nrow()
+       }, .progress = T)) %>%
+  mutate(n_matrix = crashes * hospitals)
+```
+
+### Call MapBoxAPI
+
+```{r travel_times, eval=FALSE, message=TRUE}
+# Try to get the counties that we can (some will fail)
+travel <- by_county %>%
+    map(\(df) fxn3_possible(df, df_hosp=hospitals), .progress = T)
+
+# These are the ones that we could look up
+temp.df <- travel %>% 
+  discard(\(x) length(x)==1) %>%
+  dplyr::bind_rows()
+
+# now we can look up the remaining cases (treating them as if they were
+# all in the same county)
+temp.df2 <- df_cases %>%
+  mutate(case_id = str_glue("{CaseYear}_{ST_CASE}")) %>%
+  st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs="NAD83") %>%
+  anti_join(temp.df, join_by(case_id)) %>%
+  fxn3(df_hosp=hospitals)
+
+# # Verify we've looked up all cases
+# df_cases %>%
+#   mutate(case_id = str_glue("{CaseYear}_{ST_CASE}")) %>%
+#   anti_join(dplyr::bind_rows(temp.df, temp.df2))
+
+# Write to file
+dplyr::bind_rows(temp.df, temp.df2) %>% 
+  tidyr::separate_wider_delim(case_id, 
+                              delim="_", 
+                              names = c("CaseYear", "ST_CASE")) %>%
+  rename(hospital_ID = ID) %>%
+  readr::write_csv(here("NHTSA_CSV", "traveltime-all-hospitals.csv"))
+
+rm(by_county, travel, temp.df, temp.df2)
+
+```
+
 ```{r, eval=F}
 # Conceptually, what we can do is shown below:
 # Pick a number (n_closest) to find the closest number of hospitals to the area
 # then find the distance to the farthest of these hospitals
 
-fxn1(wv_tract, hospitals, n_closest = 5)  %>%
+temp.geo <- wv_counties
+
+fxn1(temp.geo, hospitals)  %>%
   # Find the distance from the fifth farthest hospital
   group_by(GEOID) %>%
   filter(Distance==max(Distance)) %>%
   
   # Join this distance to our data and make a circle around the centroid
   # of that geography
-  inner_join(wv_tract, by = join_by(GEOID)) %>%
+  inner_join(temp.geo, by = join_by(GEOID)) %>%
   mutate(geometry = st_centroid(geometry),
          geometry = st_buffer(geometry, dist=Distance)) %>%
   st_as_sf() %>%
   ggplot() + 
   geom_sf(color="red") +
-  geom_sf(data=wv_tract, alpha=0.5) +
-  geom_sf(data=hospitals, alpha=0.5)
+  geom_sf(data=temp.geo, alpha=0.5) +
+  geom_sf(data=hospitals, alpha=0.5, color="blue") 
+
+rm(temp.geo)
+
+# get_dist <- function(county, sleep_time=0.2){
+#   
+#   Sys.sleep(sleep_time)
+#   times <- mb_matrix(county, hospitals)
+#   apply(times, 1, min)
+# }
+
+
+  
+#   
+# head(wv_counties) %>% 
+#   mutate(x = geometry %>% map(function(x) x))
 ```
 
 ```{r, eval=F}
 temp.df <- df_persons %>%
-  left_join(select(df_cases, CaseYear, ST_CASE, LONGITUD, LATITUDE, WEATHERNAME)) %>%
+  left_join(select(df_cases, CaseYear, ST_CASE, 
+                   LONGITUD, LATITUDE, WEATHERNAME)) %>%
   filter(str_detect(HOSPITAL, "EMS")) %>%
   st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs=WV_crs)
 
@@ -668,6 +890,6 @@ wv_counties %>%
 rm(temp.df)
 ```
 
-```{r}
+```{r sessioninfo}
 sessioninfo::session_info()
 ```
