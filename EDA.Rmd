@@ -34,6 +34,7 @@ library(DiagrammeR)
 
 # For maps
 library(sf)
+library(mapdeck)
 library(mapview)
 library(mapboxapi)
 library(mapview)
@@ -416,6 +417,8 @@ df_vehicles %>%
 
 # **Spatial Data**
 
+Please note: The [Distance calculations](#distance-calculations) and [Drive times](#drive-times) sections contain much more technical documentation than is elsewhere in this page. Think of those sections like the methods section of an academic paper: You can read it if you're into that kind of stuff or you can skip it at your own risk
+
 ```{r download-tigris}
 library(sf)
 library(mapview)
@@ -617,7 +620,7 @@ fxn1(wv_cbg, filter(hospitals, str_detect(TRAUMA, "LEVEL")), n_closest = 1) %>%
 
 However, this still doesn't solve our drive time issue, which we will tackle in the next section
 
-## Drive times
+## Drive times {#drive-times}
 
 We will create a similar function for the drive time, called **`fxn2`**. This is similar to [fxn1](#distance-calculations) but has a few distinctions[^3]. The most important difference is the function below calls the [MapBox API](https://docs.mapbox.com/api/navigation/matrix/). MapBox's API has [free monthly limits](https://www.mapbox.com/pricing/#directionsmatrix), and given the size of this dataset this could get very expensive. Running this function on all of the data once would cost \$52 and running it twice would cost over \$300. Hence we need to make more focused API calls, which is [addressed below](#conceptual-approach).
 
@@ -627,7 +630,8 @@ But before we worry about that, let's explore how **`fxn2`** works:
 
 ```{r fxn2, class.source = 'fold-show'}
 fxn2 <- function(case_geo, hosp_geo, sleep_time=1,
-                 name_case="case_id", name_hosp="ID"){
+                 name_case="case_id", name_hosp="ID",
+                 allow_large=TRUE){
   #' Get the drivetime matrix in a tidy format
   #'
   #' @param case_geo A "POINT" sf object of starting points
@@ -636,9 +640,12 @@ fxn2 <- function(case_geo, hosp_geo, sleep_time=1,
   #'                   prevent timing out when making frequent API calls, 
   #'                   particularity when using this function within `map()` 
   #' @param name_case The name of the column in `case_geo` to use as IDs 
-  #'                   Defaults to "case_id"  
+  #'                  Defaults to "case_id"  
   #' @param name_hosp The name of the column in `hosp_geo` to use as IDs 
-  #'                    Defaults to "ID"  
+  #'                  Defaults to "ID"
+  #' @param allow_large Should the mapbox api be allowed to return large matrix?
+  #'                    If true, this may get very expensive    
+  #'  
   #' @return Tidy dataframe with three columns: `case_geo`, `hosp_geo`, and the
   #'         driving time between case_geo<-->hosp_geo in minutes
   
@@ -661,7 +668,7 @@ fxn2 <- function(case_geo, hosp_geo, sleep_time=1,
   
   # Call the API
   times <- mapboxapi::mb_matrix(case_geo, hosp_geo, 
-                                allow_large_matrix=TRUE)
+                                allow_large_matrix=allow_large)
   
   ####------------------------ Create tidy dataframe ------------------------####
   times %>%
@@ -686,7 +693,7 @@ fxn2 <- function(case_geo, hosp_geo, sleep_time=1,
 
 We can examine how **`fxn2`** works with a focused example (three crashes, two hospitals), as shown below:
 
-```{r fxn2-example-map}
+```{r fxn2-example-map, cache=TRUE}
 ####-------------------------- Create sample data --------------------------####
 temp.cases <- df_cases %>%
   mutate(case_id = str_glue("{CaseYear}_{ST_CASE}")) %>%
@@ -739,21 +746,75 @@ full_join(temp.dist, temp.drive) %>%
 rm(temp.cases, temp.hosp, temp.dist, temp.drive)
 ```
 
-### Conceptual approach {#conceptual-approach}
+### Overview of approach {#conceptual-approach}
 
-Returning to the discussion above about limiting the search space, if we tried to find the distance for *all cases* to *all hospitals*, it would be a `r nrow(df_cases)` by `r nrow(hospitals)` matrix for the travel times, which would be `r scales::comma(nrow(df_cases) * nrow(hospitals))` results!
+Returning to the discussion above about limiting the search space, if we tried to find the distance for *all cases* (n=`r nrow(df_cases)`) to *all hospitals* (n=`rnrow(hospitals)`), it would be a `r nrow(df_cases)` by `r nrow(hospitals)` matrix for the travel times, which would be `r scales::comma(nrow(df_cases) * nrow(hospitals))` results!
 
 The optimal solution would be to find the closest few hospitals (geographically) for each case and calculate the travel time on a cases-by-case basis. If we did this for the three closest hospitals, this would reduce our computational burden `r round((nrow(df_cases) * nrow(hospitals))/(nrow(df_cases)*3))`-fold. However, sending `r nrow(df_cases)` individual queries gets quite cumbersome (the API frequently times out), so I had to find another solution.
 
-The compromise I landed on was to "chunk" things into smaller groups, namely by county. So instead of determining the distance from *all cases* to *all hospitals*, I loop through the following [for each county]{.underline}:
+The compromise I landed on was to "chunk" things into smaller groups (in this case, by county) and do the following steps: So instead of determining the distance from *all cases* to *all hospitals*, I loop through the following [for each county]{.underline}:
 
-1.  Look at all of the cases in a county
+A.  Split the `df_cases` table by the county the crash occurred within. We can then loop through this list of smaller cases (in the table below) and apply steps B & C to each county
 
-2.  Find the `r formals(fxn1)[["n_closest"]]` closest hospitals for each case within the county. The list of all of these hospitals becomes the hospitals we will look at for that county
+B.  *For [each]{.underline} county*, use [fxn1](#distance-calculations) to find the `r formals(fxn1)[["n_closest"]]` closest hospitals for each case within the county. The list of all of these hospitals becomes the hospitals we will look at for that county
 
-3.  For each county, query the driving time from all of the cases (in that county) to the hospitals identified in step 2
+C.  *For [each]{.underline} county*, use [fxn2](#drive-times) to query the driving time from all of the cases (in that county) to the hospitals (identified in step B)
 
-```{r}
+An overview of these steps is graphically shown below (TODO: Find a better package for these types of flow diagrams, maybe call the [Mermaid.js](https://mermaid.js.org/) directly instead of using it within an R package)
+
+```{r conceptual-mermaid, fig.cap = "*Overview of the approach*", echo=F, fig.height=8}
+DiagrammeR::mermaid("
+  graph TB
+  
+    subgraph Step A
+        All[<code><b>df_cases</b></code><br>1537 crashes]
+        C1[Cases for<br>county 1]
+        C2[Cases for<br>county 2]
+        C3[Cases for<br>county <code>n</code>]
+        by_county[<code><b>by_county</b></code><br>List of df]
+    end
+    
+    All-->|split by<br>county|C1
+    All-->|split by<br>county|C2
+    All-.->|split by<br>county|C3
+    C1-->by_county
+    C2-->by_county
+    C3-.->by_county
+    
+    hospitals[<code><b>hospitals</b></code><br>All hospitals]
+    
+    
+    subgraph Step C...AKA...fxn3
+      subgraph Step B
+          fxn1(<b>Fxn1</b>) 
+          hosp(Close hospitals<br><i>list of close hospitals<br>for that county</i>)
+      end
+      
+      fxn2(<b>Fxn2</b>)
+    end
+    
+    by_county==>|For each<br>county's<br>cases|fxn1
+    hospitals-->fxn1
+    fxn1-->hosp
+    
+    by_county==>|For each<br>county's cases|fxn2
+    hosp==>fxn2
+    
+    %%classDef driver fill:#ffcccb
+    classDef grey fill: #d3d3d3
+    classDef funct fill: #73be73
+    classDef global fill:#f96
+    class All,hospitals global
+    class fxn1,fxn2 funct
+    class B,C3 grey
+")
+```
+
+### Step A
+
+For the first step, we can use the `split()` function to split the entire list of crashes (`df_cases`) by the county. This creates a list of data.frames, with one list-item for each county. We'll call this list `by_county`. The table below shows the dimensions for each of the data.frames in this list, with the first number being the number of crashes in that county
+
+```{r split-counties}
 by_county <- df_cases %>%
   mutate(case_id = str_glue("{CaseYear}_{ST_CASE}")) %>%
 
@@ -764,43 +825,221 @@ by_county <- df_cases %>%
   map(\(df) st_as_sf(df, coords = c("LONGITUD", "LATITUDE"), crs="NAD83")) 
 ```
 
-```{r fxn3, class.source = 'fold-show'}
-fxn3 <- function(df_cases, df_hosp, output="travel"){
-  
-  # Make sure provided output is valid
-  output <- rlang::arg_match(output, c("travel", "hosp"))
-  
-  hosp <- fxn1(geo_polys = df_cases, 
-               geo_points = df_hosp, 
-               name_polys = "case_id") %>%
-    semi_join(df_hosp, ., by = join_by(ID))
-  
-  if(output=="hosp") return(hosp)
-  
-  fxn2(case_geo = df_cases, hosp_geo = hosp)
-}
-
-# Create a version of fxn3 
-fxn3_possible <- purrr::possibly(fxn3, NA_real_)
-  
-# fxn3(by_county[[1]], hospitals)
+```{r case-county-dims, echo=FALSE}
+tibble(
+  dimensions = map_chr(by_county, \(x) str_glue("{nrow(x)} x {ncol(x)}"))
+) %>%
+  t() %>%
+  as_tibble() %>%
+  magrittr::set_names(str_remove(names(by_county), "\\(.+\\)"))
 ```
 
-asdasd
+If we preview the first list-item, we can see the output is the same as if we filtered `df_cases` to `COUNTYNAME == "POCAHONTAS"`
+
+```{r case-county-preview, collapse=T, class.source = 'fold-show'}
+by_county[[1]] %>% print()
+
+df_cases %>% 
+  filter(COUNTYNAME=="POCAHONTAS (75)") %>%
+  print()
+```
+
+### Step B
+
+In the next step, we use [fxn1](#distance-calculations) to find the `r formals(fxn1)[["n_closest"]]` closest hospitals for each case within the county. The aim here is to narrow down the list of all hospitals from the global list (`hospitals`) to a more narrowed set of hospitals tailored to that counties cases. It returns a filtered versions of `hospitals`, limited to only the hospitals that had at least one match using fxn1
+
+```{r step-b-code, eval=FALSE, class.source = 'fold-show'}
+by_county %>%
+  
+  # For each county's cases...
+  map(\(county_cases){
+    # look up closest hospitals (using the list of all hospitals)
+    output <- fxn1(geo_polys = county_cases,
+                   geo_points = hospitals, 
+                   name_polys = "case_id")
+    
+    # return a filtered list all hospitals, limiting to only those found above
+    semi_join(hospitals, output, by = join_by(ID))
+  })
+```
+
+A visual example of what we're doing here is shown below for **Webster county** (Figure \@ref(fig:step-b-example)). The big purple dots are the locations of the hospitals that are returned.
+
+You'll note that some of the hospitals, for example *Pocahontas Memorial Hospital* (the eastern-most circle) only matched to some crashes. But since it matched to at least one crash, it's included nevertheless. This isn't the most efficient way to do things, but it still limits our search space drastically, as we now have 4 hospitals to look at for Webster county instead of `r nrow(hospitals)`.
+
+```{r step-b-example}
+#| fig.cap = "*Example of Step B for Webster county*"
+# WEBSTER (101)
+# HANCOCK (29)
+####-------------------------- Create sample data --------------------------####
+temp.cases <- by_county[["WEBSTER (101)"]] %>%
+  select(case_id) 
+
+temp.cases <- bind_cols(temp.cases,      # Make the coordinates explicit
+                        st_coordinates(temp.cases)) %>%
+  rename(case_lng = X, case_lat=Y) %>%
+  sf::st_drop_geometry()
+
+temp.output <- fxn1(geo_polys = by_county[["WEBSTER (101)"]], 
+                  geo_points = hospitals, 
+                  name_polys = "case_id") 
+
+temp.hosp <- temp.output %>%
+  semi_join(hospitals, ., by = join_by(ID)) %>%
+  select(ID, NAME) 
+
+temp.hosp <- bind_cols(temp.hosp,        # Make the coordinates explicit
+                       st_coordinates(temp.hosp)) %>%
+  rename(hosp_lng = X, hosp_lat=Y) %>%
+  sf::st_drop_geometry()
+
+####------------------------------ Create map ------------------------------####
+library(mapdeck)
+# expand_grid(temp.cases, temp.hosp) %>%
+temp.output %>%
+  left_join(temp.cases, by = join_by(case_id)) %>%
+  left_join(temp.hosp, by = join_by(ID)) %>%
+
+  mapdeck(pitch = 50, zoom=12) %>%
+  # The arcs for distances
+  add_arc(origin = c("case_lng", "case_lat"),
+          auto_highlight=TRUE,
+          destination = c("hosp_lng", "hosp_lat")) %>%
+  
+  # add points for each hospital
+  add_scatterplot(data = temp.hosp,
+                  lon = "hosp_lng",
+                  lat = "hosp_lat",
+                  tooltip = "NAME",
+                  auto_highlight=TRUE,
+                  radius_min_pixels = 8) %>%
+  
+  # add the polygon
+  add_polygon(data = filter(wv_counties, GEOID=="54101"),
+            fill_opacity = 0.20,
+            # tooltip = "NAMELSAD",
+            stroke_opacity = 1)
+
+rm(temp.cases, temp.hosp, temp.output)
+```
+
+### Step C
+
+In our final step, we combine the **filtered list of hospitals** from [step B] with the **county's crashes** (from the list of data.frames, `by_county`, in [step A]) to **look up the drive times** using [fxn2](#drive-times). This is a lot of moving parts, so revisiting Figure \@ref(fig:conceptual-mermaid) which shows the overview of the approach may be helpful.
+
+Below is fxn3, which combines [fxn1](#distance-calculations) and [fxn2](#drive-times). It's designed to take a limted number of cases (`df_limited_cases`, such as one county's cases; *step A*) and an large number of places to look up (`df_hosp`, such as the hospitals data.frame). In the first part of the function, it does [step B] to limit the number of hospitals to lookup as destinations. It then calls the `mb_matrix` function (via fxn2) to look up the drive times from all cases (in `df_limited_cases`) to all hospitals identified in the aformentioned step.
+
+Because `fxn3` will be used in a mapping[^4] function that calls the MapBox API, we don't want the loop to stop if it runs into an error (this would waste valuable API calls without returning any results). To prevent this from happening, I'll wrap the function in `purrr::possibly` which will replace errors with NA. We can then circle back to those errors later.
+
+[^4]: That is, a `purrr::map()` function (similar to a loop), not a geographic mapping function
+
+```{r fxn3, class.source = 'fold-show'}
+fxn3 <- function(df_limited_cases, df_hosp, output="travel"){
+  
+  # Make sure provided output is valid. If given output of "hosp", then it 
+  # only returns the output of step B
+  output <- rlang::arg_match(output, c("travel", "hosp"))
+  
+  # This is step B: Find close hospitals
+  close_hosp <- fxn1(geo_polys = df_limited_cases, 
+                     geo_points = df_hosp, 
+                     name_polys = "case_id") %>%
+    semi_join(df_hosp, ., by = join_by(ID))
+  
+  if(output=="hosp") return(close_hosp)
+  
+  # This is step C: Look up travel times
+  fxn2(case_geo = df_limited_cases, 
+       hosp_geo = close_hosp, 
+       allow_large = FALSE)
+}
+
+# fxn3(by_county[[1]], hospitals)
+
+
+## Create version of fxn3 that won't stop the `map()` if one of the counties fail
+fxn3_possible <- purrr::possibly(fxn3, NA_real_)
+```
+
+Now that we've finally outlined the methodology, we can test it to see how much it narrowed down the search space (compared to looking at the drive time from all `r nrow(df_cases)` cases to all `r nrow(hospitals)` hospitals.
+
+Figure \@ref(fig:show-matrix-size) shows the rection in this computational burden. The grey box shows the original size of the distance/drive-time matrix, and the colored boxes show the matrix size for each county's cases
 
 ```{r show-matrix-size, cache=TRUE}
-tibble(county  = names(by_county),
+#| fig.cap = "*Size of matrices using my approach vs original*"
+####-------------------------- Create sample data --------------------------####
+temp.df <- tibble(county  = names(by_county),
        crashes = map_int(by_county, nrow),
        hospitals = map_int(by_county, \(df){
          fxn3(df, df_hosp=hospitals, output="hosp") %>%
           nrow()
        }, .progress = T)) %>%
   mutate(n_matrix = crashes * hospitals)
+
+# Prepare format for plotting
+temp.df <- temp.df %>% 
+  arrange(n_matrix) %>%
+  mutate(crashes_max = cumsum(crashes),
+         crashes_min = lag(crashes_max,default = 0)+1) %>%
+  
+  # # Select cases to annotate
+  # mutate(anno = n_matrix>=temp.cutoff) %>%
+  # mutate(anno = hospitals>=7) %>%
+  mutate(anno = row_number() %% 5 == 0) %>%
+  mutate(anno = ifelse(anno, str_glue("{crashes} x {hospitals}"), NA))
+
+
+temp.df %>%
+  mutate(fill=row_number() %% 6) %>%
+  ggplot(aes(xmin = 0,         ymin = crashes_min, 
+             xmax = hospitals, ymax = crashes_max)) +
+    
+  # Make a annotation with the original size of the matrix
+  annotate("rect", xmin = 0, xmax = nrow(hospitals), 
+           ymin = 0, ymax = nrow(df_cases),
+           alpha = .2, fill="grey", color="black") +
+   annotate("text", x = 70, y=1400, 
+            label = str_glue("Original matrix:\n{nrow(df_cases)} x {nrow(hospitals)}")) +
+    
+  geom_rect(aes(fill=factor(fill))) +
+  ggrepel::geom_label_repel(aes(x=hospitals, y=crashes_max, label=anno),
+                            # nudge_y = 50, 
+                            nudge_x =10) +
+  labs(x="", y="", fill="Matrix size", 
+       title="Search space",
+       subtitle = "Grey box is original search space; each colored box is the matrix for each county") +
+  # cowplot::theme_nothing() +
+  theme_void() +
+  scale_fill_brewer(type="qual") + 
+  # coord_fixed(ratio=.1) +
+  guides(fill="none")
+  
+rm(temp.df)
 ```
 
 ### Call MapBoxAPI
 
-```{r travel_times, eval=FALSE, message=TRUE}
+```{r load-travel-times}
+# This is to be run if we aren't actually downloading the data
+rm(by_county)
+
+if(!params$remote){
+  travel <- here("NHTSA_CSV", "traveltime-all-hospitals.csv") %>%
+    readr::read_csv(col_types = "ddcd")
+}
+if(params$remote){
+  travel <- paste0("https://github.com/HunterRatliff1/",
+    "WV_NHTSA/raw/main/NHTSA_CSV/",
+    "traveltime-all-hospitals.csv") %>%
+    readr::read_csv(col_types = "ddcd")
+} 
+```
+
+Now we can finally actually do the API calls and get the drive times!
+
+There are a couple counties that fail (due to [a bug](https://github.com/walkerke/mapboxapi/issues/42) with `mapboxapi::mb_matrix`), so we have to make two passes: first we try all counties, then we circle back to the ones who failed. Once we've gotten all of the data from the API, we join all the data together in one file and write it to a CSV
+
+```{r travel_times-all, eval=FALSE, message=TRUE, class.source = 'fold-show'}
 # Try to get the counties that we can (some will fail)
 travel <- by_county %>%
     map(\(df) fxn3_possible(df, df_hosp=hospitals), .progress = T)
@@ -811,7 +1050,7 @@ temp.df <- travel %>%
   dplyr::bind_rows()
 
 # now we can look up the remaining cases (treating them as if they were
-# all in the same county)
+# all in the same county)... this gets around the bug
 temp.df2 <- df_cases %>%
   mutate(case_id = str_glue("{CaseYear}_{ST_CASE}")) %>%
   st_as_sf(coords = c("LONGITUD", "LATITUDE"), crs="NAD83") %>%
@@ -835,44 +1074,7 @@ rm(by_county, travel, temp.df, temp.df2)
 
 ```
 
-```{r, eval=F}
-# Conceptually, what we can do is shown below:
-# Pick a number (n_closest) to find the closest number of hospitals to the area
-# then find the distance to the farthest of these hospitals
-
-temp.geo <- wv_counties
-
-fxn1(temp.geo, hospitals)  %>%
-  # Find the distance from the fifth farthest hospital
-  group_by(GEOID) %>%
-  filter(Distance==max(Distance)) %>%
-  
-  # Join this distance to our data and make a circle around the centroid
-  # of that geography
-  inner_join(temp.geo, by = join_by(GEOID)) %>%
-  mutate(geometry = st_centroid(geometry),
-         geometry = st_buffer(geometry, dist=Distance)) %>%
-  st_as_sf() %>%
-  ggplot() + 
-  geom_sf(color="red") +
-  geom_sf(data=temp.geo, alpha=0.5) +
-  geom_sf(data=hospitals, alpha=0.5, color="blue") 
-
-rm(temp.geo)
-
-# get_dist <- function(county, sleep_time=0.2){
-#   
-#   Sys.sleep(sleep_time)
-#   times <- mb_matrix(county, hospitals)
-#   apply(times, 1, min)
-# }
-
-
-  
-#   
-# head(wv_counties) %>% 
-#   mutate(x = geometry %>% map(function(x) x))
-```
+### TODO: Same thing but only trauma centers 
 
 ```{r, eval=F}
 temp.df <- df_persons %>%
